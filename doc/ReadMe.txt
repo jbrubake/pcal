@@ -453,6 +453,10 @@ Building 'pcal':
            1-column-per-month calendars with any value for the '-F' flag (or
            without using the '-F' flag at all).
 
+         - Fixed a couple of security holes whereby a malicious calendar file
+           (e.g from an external source) could cause an exploitable buffer
+           overflow attack.
+
       6) Documentation changes:
    
          - Made major changes to the 'pcal.man' file to bring it up-to-date
