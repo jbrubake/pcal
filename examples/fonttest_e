@@ -1,0 +1,64 @@
+# Pcal input file to test Esperanto (derived from ISO-8859-3) character mappings
+#
+# characters are printed in ascending order unless symbol "sort" is defined,
+# in which case they are sorted by character name
+
+opt -d Helvetica-Bold -t Helvetica-Bold -n AvantGarde-Book/9 -N ""
+opt -S -B -b all
+opt -r Esperanto
+opt -C "Test of Esperanto character mappings"
+
+ifdef sort
+all 01	306\177\177\306\177\177Ccircumflex
+all 01	330\177\177\330\177\177Gcircumflex
+all 01	246\177\177\246\177\177Hcircumflex
+all 01	254\177\177\254\177\177Jcircumflex
+all 02	336\177\177\336\177\177Scircumflex
+all 02	335\177\177\335\177\177Ubreve
+all 02	346\177\177\346\177\177ccircumflex
+all 02	370\177\177\370\177\177gcircumflex
+all 03	266\177\177\266\177\177hcircumflex
+all 03	274\177\177\274\177\177jcircumflex
+all 03	376\177\177\376\177\177scircumflex
+all 03	375\177\177\375\177\177ubreve
+
+all 04	\C\X\177\177\CX\177\177Ccircumflex
+all 04	\G\X\177\177\GX\177\177Gcircumflex
+all 04	\H\X\177\177\HX\177\177Hcircumflex
+all 04	\J\X\177\177\JX\177\177Jcircumflex
+all 05	\S\X\177\177\SX\177\177Scircumflex
+all 05	\U\~\177\177\U~\177\177Ubreve
+all 05	\c\x\177\177\cx\177\177ccircumflex
+all 05	\g\x\177\177\gx\177\177gcircumflex
+all 06	\h\x\177\177\hx\177\177hcircumflex
+all 06	\j\x\177\177\jx\177\177jcircumflex
+all 06	\s\x\177\177\sx\177\177scircumflex
+all 06	\u\~\177\177\u~\177\177ubreve
+else
+
+all 01	246\177\177\246\177\177Hcircumflex
+all 01	254\177\177\254\177\177Jcircumflex
+all 01	266\177\177\266\177\177hcircumflex
+all 01	274\177\177\274\177\177jcircumflex
+all 02	306\177\177\306\177\177Ccircumflex
+all 02	330\177\177\330\177\177Gcircumflex
+all 02	335\177\177\335\177\177Ubreve
+all 02	336\177\177\336\177\177Scircumflex
+all 03	346\177\177\346\177\177ccircumflex
+all 03	370\177\177\370\177\177gcircumflex
+all 03	375\177\177\375\177\177ubreve
+all 03	376\177\177\376\177\177scircumflex
+
+all 04	\H\X\177\177HX\177\177Hcircumflex
+all 04	\J\X\177\177JX\177\177Jcircumflex
+all 04	\h\x\177\177hx\177\177hcircumflex
+all 04	\j\x\177\177jx\177\177jcircumflex
+all 05	\C\X\177\177CX\177\177Ccircumflex
+all 05	\G\X\177\177GX\177\177Gcircumflex
+all 05	\U\~\177\177U~\177\177Ubreve
+all 05	\S\X\177\177SX\177\177Scircumflex
+all 06	\c\x\177\177cx\177\177ccircumflex
+all 06	\g\x\177\177gx\177\177gcircumflex
+all 06	\u\~\177\177u~\177\177ubreve
+all 06	\s\x\177\177sx\177\177scircumflex
+endif

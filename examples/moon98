@@ -1,0 +1,111 @@
+# 1998 moon phase information for Pcal (from Old Farmer's Almanac)
+#
+# This file is to be called .moon98 (or moon98) for Un*x, moon98.dat for VMS;
+# it is to live in the same directory as the .calendar file or in the directory
+# where the Pcal executable lives.
+#
+# Moon file syntax:
+#
+#	The user may enter the dates and (optionally) times of quarter
+#	moons (from a reliable source such as an almanac or astronomical
+#	table) into a file called .moon%y (moon%y.dat on VMS), where %y is
+#	the last two digits of the year.  If such a file exists (in the
+#	same directory as the date file, or in the directory where Pcal
+#	itself lives), Pcal will interpolate the phase of the moon from the
+#	information in this file instead of using the default algorithm.
+#
+#	(Pcal originally used an extremely simplistic moon phase algorithm;
+#	the moon file was added to v4.0 to enable Pcal to interpolate the
+#	phase of the moon from the [presumably more accurate] information
+#	within.  More recently, the original moon phase algorithm was
+#	superseded by an astronomer-strength version, largely obviating
+#	the need for a moon file; however, it will continue to be
+#	supported for the foreseeable future.)
+#
+#	Entries in the moon file must conform to the following syntax:
+#
+#	  if -A flag (American date formats) specified:
+#	    <quarter> <month><sep><day> {<hour><sep><min>}
+#
+#	  if -E flag (European date formats) specified:
+#	    <quarter> <day><sep><month> {<hour><sep><min>}
+#
+#	where
+#
+#	  <quarter> := "nm", "fq" or "1q", "fm", "lq" or "3q" (new
+#			moon, first quarter, full moon, last quarter)
+#	  <hour>    := number 0-23 (24-hour clock)
+#	  <min>     := number 0-59
+#
+#	This file must contain entries for all quarter moons in the year,
+#	in chronological order; if any errors are encountered, Pcal will
+#	revert to using its default algorithm.
+#
+#	As in the date file, comments start with '#' and run through
+#	end-of-line.  
+#
+# Dates and times below are for Boston (EST), in -A format; you may wish to
+# adjust these dates and times to conform to your location.
+
+opt -A			# file contains American-style dates
+
+fq 01/05 09:18		# first quarter
+fm 01/12 12:24
+lq 01/20 14:40
+nm 01/28 01:01
+
+fq 02/03 17:53
+fm 02/11 05:23
+lq 02/19 10:27
+nm 02/26 12:26
+
+fq 03/05 03:41
+fm 03/12 23:34
+lq 03/21 02:38
+nm 03/27 22:14
+
+fq 04/03 15:18
+fm 04/11 18:23
+lq 04/19 15:53
+nm 04/26 07:41
+
+fq 05/03 06:04
+fm 05/11 10:29
+lq 05/19 00:35
+nm 05/25 15:32
+
+fq 06/01 21:45
+fm 06/10 00:18
+lq 06/17 06:38
+nm 06/23 23:50
+
+fq 07/01 14:43
+fm 07/09 12:01
+lq 07/16 11:13
+nm 07/23 09:44
+fq 07/31 08:05
+
+fm 08/07 22:10
+lq 08/14 15:48
+nm 08/21 22:03
+fq 08/30 01:06
+
+fm 09/06 07:21
+lq 09/12 21:58
+nm 09/20 13:01
+fq 09/28 17:11
+
+fm 10/05 16:12
+lq 10/12 07:11
+nm 10/20 06:09
+fq 10/28 06:46
+
+fm 11/04 00:18
+lq 11/10 19:28
+nm 11/18 23:27
+fq 11/26 19:23
+
+fm 12/03 10:19
+lq 12/10 12:53
+nm 12/18 17:42
+fq 12/26 05:46

@@ -1,0 +1,311 @@
+# -----------------------------------------------------------------------------
+#    
+#    This file contains examples of various options, directives, and event
+#    definitions for the 'pcal' calendar-generation program.
+#       
+#    For full details on the available commands and the associated syntax,
+#    view the 'pcal.man' file (or one of the 'pcal-help.*' files which are
+#    generated from the 'man' page) using an appropriate viewer application.
+#    
+# Revision History:
+#
+# 4.8.0
+#     
+#    2004-12-05 -- changes by Bill Marr (marr99@users.sourceforge.net):
+#       
+#       Created this file with useful examples of various 'pcal' configuration
+#       options.
+#    
+# -----------------------------------------------------------------------------
+
+# 
+# Define the paper size...
+# 
+#    'Letter' = 8.5 x 11.0 inches
+#    'Legal' = 8.5 x 14.0 inches
+#    'A4' = 210 x 297 mm
+#    'Tabloid' (aka 'Ledger') = 11.0 x 17.0 inches
+# 
+opt -P letter
+### opt -P legal
+### opt -P a4
+### opt -P tabloid
+
+# 
+# Select alternate fonts...
+# 
+# (Try the Helvetica fonts if your printer doesn't support AvantGarde.)
+
+#    -d = date numbers font
+#    -t = title (at page top) font
+#    -n = notes (in day boxes and 'Notes' box) font
+# 
+### opt -d AvantGarde-Book/30 -t AvantGarde-Book -n Helvetica/8
+### opt -d Helvetica-Bold/30 -t Helvetica-Bold -n Helvetica/8
+opt -d Times-Roman/18 -t Times-Roman/30 -n Times-Roman/8
+
+# 
+# Display moon status icons on every day of a monthly calendar.
+# 
+opt -M
+
+# 
+# Display moon status icons only on the days when the moon is at the 'full',
+# 'half', or 'new' stage.
+# 
+### opt -m
+
+# 
+# Display Julian dates (numeric sequence of days in year) on every day of a
+# monthly calendar.
+# 
+# opt -j
+
+# 
+# Display Julian dates and 'days remaining in year' on every day of a monthly
+# calendar.
+# 
+opt -J
+
+# 
+# Interpret dates in this file as 'American' style.
+# 
+opt -A
+
+# 
+# Interpret dates in this file as 'European' style.
+# 
+# opt -E
+
+# 
+# Override the default colors for the 'date numerics' (i.e. the numbers
+# printed in the day box) (enabled with the '-g', '-G', or '-O' options) and
+# for the fill color of empty (unused) 'day' boxes.
+# 
+opt -s 1.0:0.0:0.0/1.0:1.0:0.8  # red numerals / light yellowish boxes
+
+# 
+# This directive causes the following entries to apply to every year, rather
+# than just applying to the current year.
+# 
+year all
+
+# 
+# Demonstrate use of the 'Notes' box.  This is a way to display notes in one
+# of the empty, unused 'day boxes' on a monthly calendar.
+# 
+# Put the same note in all months, with the abbreviated month name as part of
+# the note.
+# 
+# The '/2' means that this note should go in the 2nd empty 'day box' counting
+# from the beginning of the month.  Use of '/-3' instead (for example) would
+# cause this note to go in the 3rd empty 'day box' from the end of the month.
+# The default position if no '/#' is specified is the last empty box of the
+# month.
+# 
+# It is possible to place more than 1 note in the same box.  It is also
+# possible to use more than 1 box for the various monthly notes.
+# 
+note/2 all   \fBEnjoy life\fP during %b!
+
+# 
+# Put a note in some specific months, showing the full month name...
+# 
+# Those living in the Southern Hemisphere can reverse the months so it makes
+# more sense.  :^)
+# 
+note Jan   Brr... It's cold in %B!
+note Jul   Whew, it's hot in %B!
+
+# 
+# Demonstrate the ability to display someone's age on their birthday.
+# 
+# This example is for someone born in 1991.  It will display the text "Eric's
+# 14th Birthday" on May 10, 2005.
+# 
+May 10 Eric's %-1991Y%oY Birthday
+
+# 
+# Demonstrate the ability to distinguish between different versions of 'pcal'.
+# 
+# Version 4.8.0 adds the ability to display embedded EPS images on monthly
+# calendars, so we'll display a photo of the "birthday boy" if we're running
+# 4.8.0.
+# 
+# We scale the image by 0.50 in the X and Y dimensions, and we use a X and Y
+# offsets of 0 and -8 typographic points, respectively.  The non-zero Y offset
+# moves the EPS image down slightly to leave room for the "Eric's 14th
+# Birthday" text which will appear below the day's numerics.
+# 
+ifdef v4_8_0
+May 10 image:/path-to-eps/eric.eps 0.50 0.50 0 -8
+endif
+
+# 
+# Demonstrate some simple 'pre-processor'-like functionality:
+# 
+define MINI_EPS_IMAGE
+ifdef MINI_EPS_IMAGE
+Dec 25		image:/path-to-eps/xmas.eps 0.75 0.75 0 0
+else
+Dec 25		image:/path-to-eps/xmas.eps 1.00 1.00 0 0
+endif
+undef MINI_EPS_IMAGE
+
+# 
+# Demonstrate the ability to define a symbol and associate a value with that
+# symbol.
+# 
+###  # This version seems to break (turns off) the 'year all' 
+###  # (or 'year *') command:
+###  define sem_start 8/23/2004  # Beginning of semester
+define semester_start 8/23   # Beginning of semester
+semester_start                 Class Start
+7th  day after semester_start  1st Quiz
+14th day after semester_start  2nd Quiz
+undef semester_start
+
+# 
+# If the symbol "whole_year" has been defined (either implicitly via the '-w'
+# option or explicitly), print a centered footer string containing the first
+# and last dates of the year...
+# 
+ifdef whole_year
+  opt -C "%B %d, %Y - %+1Y%-1D%B %d, %Y"
+endif
+
+# 
+# Demonstrate the ability to distinguish between different languages, in a
+# silly way, by writing the name of the language as a footer for the calendar.
+# 
+ifndef whole_year
+if lang_en
+   opt -C "English"
+elif lang_el
+   opt -C "Greek"
+elif lang_it
+   opt -C "Italian"
+elif lang_fr
+   opt -C "French"
+elif lang_de
+   opt -C "German"
+elif lang_eo
+   opt -C "Esperanto"
+elif lang_es
+   opt -C "Spanish"
+elif lang_fi
+   opt -C "Finnish"
+elif lang_sv
+   opt -C "Swedish"
+elif lang_pt
+   opt -C "Portuguese"
+elif lang_uk
+   opt -C "Ukrainian"
+elif lang_et
+   opt -C "Estonian"
+elif lang_ru
+   opt -C "Russian"
+elif lang_lv
+   opt -C "Latvian"
+elif lang_lt
+   opt -C "Lithuanian"
+endif
+endif
+
+# 
+# Demonstrate the ability to distinguish between different paper sizes, in a
+# silly way, by writing the name of the language as a footer for the calendar.
+# 
+ifdef papersize_letter
+   opt -L	"LETTER paper"
+elifdef papersize_legal
+   opt -L	"LEGAL paper"
+elifdef papersize_a4
+   opt -L	"A4 paper"
+elifdef papersize_tabloid
+   opt -L	"TABLOID paper"
+endif
+
+
+# 
+# Demonstrate the ability to distinguish between different page orientations,
+# in a silly way, by writing the name of the language as a footer for the
+# calendar.
+# 
+ifdef orientation_portrait
+   opt -R	"PORTRAIT mode"
+elifdef orientation_landscape
+   opt -R	"LANDSCAPE mode"
+endif
+
+# 
+# Some sample (non-holiday) events...
+# 
+# Daylight Savings Time
+# 
+first Sunday in April		Begin DST
+last Sunday in Oct		End DST
+
+# 
+# Demonstrate some simple holiday events with embedded EPS images.
+# 
+# 'Thanksgiving' and 'Christmas' are predefined events.
+# 
+# The '*' following the event day specification indicates that this is a
+# holiday, which causes the text to appear to the right of the numerics (not
+# below the numerics, as for non-holiday events) and may cause the numerics to
+# be colored uniquely depending on other options.
+# 
+Thanksgiving*			Thanksgiving Day
+Thanksgiving*			image:/path-to-eps/turkey.eps 1.0 1.0 0 0
+day after Thanksgiving*
+
+day before Christmas*		Christmas Eve
+Christmas*			Christmas Day
+Christmas*			image:/path-to-eps/xmastree.eps 0.225 0.225 15 0
+
+# 
+# For this event, we demonstrate the modified X positioning of the event's EPS
+# icon based on the selected paper size...
+# 
+last day in Dec*		New Year's Eve
+ifdef papersize_letter
+last day in Dec*		image:/path-to-eps/party.eps 0.32 0.32 5 0
+elifdef papersize_legal
+last day in Dec*		image:/path-to-eps/party.eps 0.32 0.32 35 0
+endif
+
+# 
+# Print a warning on 'Friday the 13th' dates.  
+# 
+# Note that this is a good example of a predefined event which we do not mark
+# ('*') as a holiday because we don't want the day numerics to be colorized
+# differently.
+# 
+F13 Avoid black cats!
+
+# 
+# Demonstrate a recurring monthly event.
+# 
+# The 'recycle.eps' file is an icon of the 3 green arrows which represents the
+# 'Recycle' symbol.  This EPS file is included in the 'pcal' distribution.
+# 
+second Sat in all		RECYCLE!
+second Sat in all		image:/path-to-eps/recycle.eps 0.039 0.039 34 -9
+
+# 
+# Demonstrate a recurring weekly event.
+# 
+# Also demonstrate use of format specifiers to get things like day-of-week
+# name into the event text...
+# 
+every Wed in all		%A poker game
+
+# 
+# Demonstrate the use of an input language other than the default (English)...
+# 
+input-language fr   # French
+every Mardi in all		%A Paris LUG Meeting   # every Tuesday
+Avr 1				April Fools Day  # 'Avril' = April
+input-language en   # switch back to English
+every Fri in all		%A Wales LUG Meeting   # every Friday
