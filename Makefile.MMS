@@ -22,15 +22,15 @@ CFLAGS	= $(CFLAGS) $(DEFS) /NoList /Optimize /NoDebug /Standard = VAXC
 OPTS	= 
 .endif
 
-OBJECTS = exprpars.obj moonphas.obj pcalutil.obj readfile.obj writefil.obj
-OBJLIST = exprpars,moonphas,pcalutil,readfile,writefil
+OBJECTS = exprpars.obj moonphas.obj pcalutil.obj pcalpapr.obj readfile.obj writefil.obj
+OBJLIST = exprpars,moonphas,pcalutil,pcalpapr,readfile,writefil
 
 .last
 	@- Set Message /Facility /Severity /Identification /Text
 
 pcal :	pcal.exe pcal.hlb
 	@ !
-	@ Write Sys$Output "pcal (v4.6) is now ready for use.  Use @setup to define variables"
+	@ Write Sys$Output "pcal is now ready for use.  Use @setup to define variables"
 
 help :	pcal.hlb
 	@ !
@@ -49,6 +49,7 @@ exprpars.obj :	exprpars.c pcaldefs.h
 moonphas.obj :	moonphas.c pcaldefs.h pcalglob.h
 pcal.obj :	pcal.c pcaldefs.h pcalglob.h pcallang.h protos.h
 pcalutil.obj :	pcalutil.c pcaldefs.h pcalglob.h pcallang.h protos.h
+pcalpapr.obj :	pcalpapr.c pcalpapr.h pcaldefs.h pcalglob.h 
 readfile.obj :	readfile.c pcaldefs.h pcalglob.h pcallang.h protos.h
 writefil.obj :	writefil.c pcaldefs.h pcalglob.h pcallang.h pcalinit.h protos.h
 pcalinit :	pcalinit.exe

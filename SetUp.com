@@ -1,4 +1,4 @@
-$ Write Sys$Output "SETting UP Pcal (v4.6)..."
+$ Write Sys$Output "SETting UP Pcal..."
 $ THIS_PATH = F$Element (0, "]", F$Environment ("PROCEDURE")) + "]"
 $ Define Pcal_Dir 'THIS_PATH'
 $ PCAL :== $ PCAL_Dir:PCAL.EXE

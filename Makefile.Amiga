@@ -1,11 +1,11 @@
 #
-# Makefile for Pcal v4.7 on the Amiga
+# Makefile for Pcal on the Amiga
 #
 #   Set the configuration variables below to taste.
 
 CC	= lc:lc
 LDFLAGS = -cufirst -v -d0 -m3s -O
-OBJECTS = pcal.o exprpars.o moonphas.o pcalutil.o readfile.o writefil.o
+OBJECTS = pcal.o exprpars.o moonphas.o pcalutil.o readfile.o writefil.o pcalpapr.o
 
 pcal:	$(OBJECTS)
 	blink from lib:c.o $(OBJECTS) to pcal lib lib:lcm.lib lib:lc.lib SC SD VERBOSE ND
@@ -17,16 +17,19 @@ exprpars.o:	exprpars.c pcaldefs.h
 moonphas.o:	moonphas.c pcaldefs.h pcalglob.h
 	$(CC) $(LDFLAGS) >bugs-$> moonphas.c
 
-pcal.o:		pcal.c pcaldefs.h pcalglob.h pcallang.h days.h months.h protos.h
+pcal.o:		pcal.c pcaldefs.h pcalglob.h pcallang.h protos.h
 	$(CC) $(LDFLAGS) >bugs-$> pcal.c
 
-pcalutil.o:	pcalutil.c pcaldefs.h pcalglob.h pcallang.h days.h months.h protos.h
+pcalpapr.o:	pcalpapr.c pcalpapr.h pcaldefs.h pcalglob.h 
+	$(CC) $(LDFLAGS) >bugs-$> pcalpapr.c
+
+pcalutil.o:	pcalutil.c pcaldefs.h pcalglob.h pcallang.h protos.h
 	$(CC) $(LDFLAGS) >bugs-$> pcalutil.c
 
-readfile.o:	readfile.c pcaldefs.h pcalglob.h pcallang.h days.h months.h protos.h
+readfile.o:	readfile.c pcaldefs.h pcalglob.h pcallang.h protos.h
 	$(CC) $(LDFLAGS) >bugs-$> readfile.c
 
-writefil.o:	writefil.c pcaldefs.h pcalglob.h pcallang.h days.h months.h protos.h pcalinit.h
+writefil.o:	writefil.c pcaldefs.h pcalglob.h pcallang.h protos.h pcalinit.h
 	$(CC) $(LDFLAGS) >bugs-$> writefil.c
 
 pcalinit: pcalinit.c

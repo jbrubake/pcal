@@ -1,6 +1,27 @@
 #
-# Makefile for pcal v4.7 under Un*x
-#
+# Makefile for pcal under Un*x, OS/2, or DOS+DJGPP
+# 
+# Use these commands:
+# 
+#    Unix/Linux: make
+# 
+#    OS/2: make OS=OS2
+# 
+#    DOS+DJGPP: make OS=DJGPP
+# 
+# 
+# v4.8.0: Enhance comments; reverse sense of 'SEARCH_PCAL_DIR' flag so that
+#         enabling the commented-out line has the desired effect; remove
+#         unused 'make' targets ('compress' and 'uuencode') and now-obsolete
+#         list of files for 'TARSRC'; remove refs to obsolete source
+#         files; remove now-unneeded specification of paper size; provide for
+#         new directory locations for source code, object code, and executable 
+#         code; merge OS/2 'Makefile.os2' file into this file; add support for
+#         DOS+DJGPP building based on a patch from Thiago F.G. Albuquerque;
+#         provide a new flag 'BUILD_ENV_xxx' so that we can distinquish the 
+#         build environment among Unix, OS/2, and DOS+DJGPP at compile time;
+#         fixed up the out-of-date target dependency lists
+#         
 # v4.7: add HTML-specific command-line definitions (cf. pcaldefs.h)
 #	delete moon96; add moon98
 #	add Makefile.os2 to TARSRC definition
@@ -15,60 +36,105 @@
 #	"make fresh" rebuilds from scratch
 #
 
-VERSION  = 4.7.1
-PCAL	 = pcal
-PCALINIT = pcalinit
+VERSION  = 4.8.0
 
-# Set the configuration variables below to taste.
+# 
+# Depending on whether we're compiling for Unix, OS/2, or DOS/DJGPP, use
+# appropriate values for the OS name, the 'build environment' flag, the names
+# of the executable files, the compiler(s), and the 'pack' value.
+# 
+# The 'PCALINIT_CC' value should always specify the compiler native to the
+# host on which we're building 'pcal'.  The 'CC' value should specify the same
+# (native) compiler, unless the target machine requires a cross-compiler.
+# 
+# The 'PACK' value is used for packing the 'man' page.  Note that setting
+# 'PACK' to ":" will cause no packing to be done; otherwise, choose
+# "compress", "pack", or "gzip" as your system requires.
+# 
+ifeq ($(OS),OS2)   # OS/2
+	OS_NAME = "OS/2"
+	D_BUILD_ENV	= -DBUILD_ENV_OS2
+	PCAL		= pcal.exe
+	PCALINIT	= pcalinit.exe
+	CC		= gcc
+	PCALINIT_CC	= gcc
+	PACK		= :
+else
+	ifeq ($(OS),DJGPP)   # DOS/DJGPP
+		OS_NAME = "DOS/DJGPP"
+		D_BUILD_ENV	= -DBUILD_ENV_DJGPP
+		PCAL		= pcal.exe
+		PCALINIT	= pcalinit.exe
+		CC		= gcc
+		PCALINIT_CC	= gcc
+		PACK =		:
+	else   # Unix
+		OS_NAME = "Unix"
+		D_BUILD_ENV	= -DBUILD_ENV_UNIX
+		PCAL		= pcal
+		PCALINIT	= pcalinit
+		CC		= /usr/bin/gcc
+		PCALINIT_CC	= /usr/bin/gcc
+		PACK		= compress
+		# PACK		= pack
+		# PACK		= gzip
+	endif
+endif
 
-PCALINIT_CC = /usr/bin/gcc			# native compiler
-CC	    = /usr/bin/gcc			# cross-compiler (if target != host)
-
-# Set COMPRESS to your preferred compression utility (compress, gzip, etc.),
-# Z to the file suffix that it generates (.Z, .gz, etc.), and UUC to the file
-# suffix to denote the uuencoded version.
-
-COMPRESS = compress
-Z	 = .Z
-UUC	 = .uuc
-
-# TAR, et. al. are for creating the 'tar' file to be subsequently compressed.
-TAR	= tar
-TMP     = /tmp
-PCALTMP = pcal.$(VERSION)
-TARFILE = pcal.$(VERSION).$(TAR)
-ZFILE	= $(TARFILE)$(Z)
-UUCFILE = $(TARFILE)$(Z)$(UUC)
-
-TARSRC = Make_Pcal.com Makefile Makefile.Amiga Makefile.DOS Makefile.MMS \
-	 Makefile.os2 \
-	 Orig.ReadMe Pcal.hlp ReadMe ReadMe.4.6 ReadMe.4.5 ReadMe.4.3 \
-	 ReadMe.4.1 SetUp.com VaxCrtl.opt calendar calendar.gk calendar.uk \
-	 cvt7to8.c cvt8to7.c days.h exprpars.c fonttest_e fonttest_l \
-	 fonttest_r months.h moon98 moonphas.c pcal.c pcal.man \
-	 pcaldefs.h pcalglob.h pcalinit.c pcalinit.ps pcallang.h pcalutil.c \
-	 protos.h pscalendar readfile.c writefil.c pcal.html pcalw.html \
-	 pcal.cgi
-
-# PACK is for packing the man page.  Note that setting PACK to ":" will cause
-# no packing to be done; otherwise, choose "compress" or "pack" as your system
-# requires.
-# PACK	= :
-PACK	= compress
-# PACK	= pack
-
-# directories for installing executable and man page(s)
+# 
+# Define various directories for the following items:
+# 
+#    - source code
+#    - object code (and compile-time, auto-generated C header files)
+#    - executable code
+#    - documentation
+#    - installed 'pcal' executable
+#    - 'man' pages
+#    - 'cat' pages
+# 
+# Note that in an attempt to better document the actions in this 'make' file,
+# separate directories are allowed for the source, the objects, and the
+# executables, but for now, we're just using the same actual destination
+# directory ('src') for all of them.
+# 
+SRCDIR	= src
+OBJDIR	= obj
+EXECDIR	= exec
+DOCDIR	= doc
 BINDIR	= /usr/local/bin
 MANDIR	= /usr/man/man1
 CATDIR	= /usr/man/cat1
 
-OBJECTS = pcal.o exprpars.o moonphas.o pcalutil.o readfile.o writefil.o
+# 
+# Compiling for DOS/DJGPP requires different directories for the installed
+# executable and the 'man'/'cat' pages.  Unix and OS/2 use the same (default)
+# values shown above.
+# 
+ifeq ($(OS),DJGPP)
+	BINDIR = $(DJDIR)/bin
+	MANDIR = $(DJDIR)/man/man1
+	CATDIR = $(DJDIR)/man/cat1
+endif
 
+OBJECTS = $(OBJDIR)/pcal.o $(OBJDIR)/exprpars.o $(OBJDIR)/moonphas.o \
+		$(OBJDIR)/pcalutil.o $(OBJDIR)/readfile.o \
+		$(OBJDIR)/writefil.o $(OBJDIR)/pcalpapr.o
+
+# ------------------------------------------------------------------
+# 
 # Site-specific defaults which may be overridden here (cf. pcallang.h);
 # uncomment the examples below and/or change them to your liking
+# 
 
-# include Roman8 or ISO Latin1 8-bit character mappings by defining MAPFONTS
-# as ROMAN8 or LATIN1 respectively
+# 
+# Define an 8-bit character mapping by defining 'MAPFONTS' to one of the
+# following:
+#    
+#    LATIN1 (for ISO Latin-1)
+#    ROMAN8 (for Roman8)
+#    ESPERANTO (for Esperanto)
+#    KOI8U (for KOI8-U [Ukrainian variant of Cyrillic])
+#    
 # D_MAPFONTS   = -DMAPFONTS=ROMAN8
 
 # redefine title, date, and notes font/pointsize (-t, -d, -n)
@@ -83,16 +149,17 @@ OBJECTS = pcal.o exprpars.o moonphas.o pcalutil.o readfile.o writefil.o
 # D_DATE_STYLE = -DDATE_STYLE=USA_DATES
 
 # specify first (leftmost) weekday on calendar (-F)
-#D_FIRST_DAY  = -DFIRST_DAY=MON
+# D_FIRST_DAY  = -DFIRST_DAY=MON
 
 # specify default time zone for moon phases: "0" = GMT; "5" = Boston (-z)
 # D_TIMEZONE   = '-DTIMEZONE="5 [Boston]"'
 
-# generate EPS-like PostScript (-DEPS)
-D_EPS	       = -DEPS
-
-# set output paper size to A4
-D_A4PAPER      = -DA4PAPER
+# 
+# This flag controls the generation of EPS-like PostScript so that the output
+# contains enhanced comments ('%%Page:', etc.) that are necessary for programs
+# like 'psnup' to do useful things with the generated calendars.
+# 
+D_EPS = -DEPS
 
 # specify default language
 # D_LANGUAGE = -DLANG_DEFAULT=LANG_ENGLISH
@@ -107,86 +174,135 @@ D_A4PAPER      = -DA4PAPER
 # D_HOLIDAY_PRE = '-DHOLIDAY_PRE="<font color=\"ff0000\"><b>"'
 # D_HOLIDAY_POST = '-DHOLIDAY_POST="</b></font>"'
 # D_BLANK_STYLE = '-DDIVIDE_BLANK_SPACE=0'
-# D_SEARCH_PCAL_DIR = '-DSEARCH_PCAL_DIR=1'
+
+# 
+# This flag controls whether 'pcal' will search for the calendar
+# control/options file ('calendar') in the directory where the 'pcal'
+# executable code resides.  Disabling this flag (by enabling the line below)
+# prevents the search, thereby avoiding a potential conflict with any program
+# named 'calendar' which has also been installed there.  Note that the
+# 'pcaldefs.h' source code file enables this search by default, unless it has
+# been overridden here.
+# 
+# D_SEARCH_PCAL_DIR = '-DSEARCH_PCAL_DIR=0'
+
+# ------------------------------------------------------------------
 
 COPTS = $(D_MAPFONTS) $(D_TITLEFONT) $(D_DATEFONT) $(D_NOTESFONT) \
-        $(D_SHADING) $(D_DATE_STYLE) $(D_FIRST_DAY) $(D_TIMEZONE) \
+	$(D_SHADING) $(D_DATE_STYLE) $(D_FIRST_DAY) $(D_TIMEZONE) \
 	$(D_EPS) $(D_LANGUAGE) $(D_BGCOLOR) $(D_BACKGROUND) \
 	$(D_TEXT) $(D_LINK) $(D_ALINK) $(D_VLINK) \
 	$(D_HOLIDAY_PRE) $(D_HOLIDAY_POST) $(D_BLANK_STYLE) \
-	$(D_SEARCH_PCAL_DIR) $(D_A4PAPER)
+	$(D_SEARCH_PCAL_DIR) $(D_BUILD_ENV)
 
-$(PCAL):	$(OBJECTS)
-	$(CC) $(LDFLAGS) -o $(PCAL) $(OBJECTS) -lm
-	@ echo "Build of $(PCAL) complete"
+# 
+# Depending on whether we're compiling for Unix, OS/2, or DOS/DJGPP, use
+# appropriate values as flags for the C compiler.
+# 
+#    '-O2' enables a 2nd-level code optimization
+#    '-Wall' enables many compile-time warning messages
+#    '-W' enables some additional compile-time warning messages
+#    '-DDOS' is used in DOS+DJGPP to get DOS-like settings
+# 
+ifeq ($(OS),OS2)   # OS/2
+	CFLAGS = -O2 -Wall
+else
+	ifeq ($(OS),DJGPP)   # DOS/DJGPP
+		CFLAGS = -DDOS
+	else   # Unix
+		CFLAGS = -O2 -Wall -W
+	endif
+endif
 
-exprpars.o:	exprpars.c pcaldefs.h
-	$(CC) $(CFLAGS) $(COPTS) -c exprpars.c
+$(EXECDIR)/$(PCAL):	$(EXECDIR)/$(PCALINIT) $(OBJECTS)
+	$(CC) $(LDFLAGS) -o $(EXECDIR)/$(PCAL) $(OBJECTS) -lm
+	@ echo "Build of $(PCAL) for" $(OS_NAME) "completed."
 
-moonphas.o:	moonphas.c pcaldefs.h pcalglob.h protos.h
-	$(CC) $(CFLAGS) $(COPTS) -c moonphas.c
+$(OBJDIR)/exprpars.o:	$(SRCDIR)/exprpars.c $(SRCDIR)/pcaldefs.h \
+			$(SRCDIR)/pcalglob.h $(SRCDIR)/protos.h
+	$(CC) $(CFLAGS) $(COPTS) -o $@ -c $(SRCDIR)/exprpars.c
 
-pcal.o:		pcal.c pcaldefs.h pcalglob.h pcallang.h days.h months.h \
-		protos.h
-	$(CC) $(CFLAGS) $(COPTS) -c pcal.c
+$(OBJDIR)/moonphas.o:	$(SRCDIR)/moonphas.c $(SRCDIR)/pcaldefs.h \
+			$(SRCDIR)/pcalglob.h $(SRCDIR)/pcallang.h \
+			$(SRCDIR)/protos.h
+	$(CC) $(CFLAGS) $(COPTS) -o $@ -c $(SRCDIR)/moonphas.c
 
-pcalutil.o:	pcalutil.c pcaldefs.h pcalglob.h pcallang.h days.h months.h \
-		protos.h
-	$(CC) $(CFLAGS) $(COPTS) -c pcalutil.c
+$(OBJDIR)/pcal.o:	$(SRCDIR)/pcal.c $(SRCDIR)/pcaldefs.h \
+			$(SRCDIR)/pcalglob.h $(SRCDIR)/pcallang.h \
+			$(SRCDIR)/pcalpapr.h $(SRCDIR)/protos.h
+	$(CC) $(CFLAGS) $(COPTS) -o $@ -c $(SRCDIR)/pcal.c
 
-readfile.o:	readfile.c pcaldefs.h pcalglob.h pcallang.h days.h months.h \
-		protos.h
-	$(CC) $(CFLAGS) $(COPTS) -c readfile.c
+$(OBJDIR)/pcalpapr.o:	$(SRCDIR)/pcalpapr.c $(SRCDIR)/pcalpapr.h \
+			$(SRCDIR)/pcaldefs.h $(SRCDIR)/pcalglob.h \
+			$(SRCDIR)/protos.h
+	$(CC) $(CFLAGS) $(COPTS) -o $@ -c $(SRCDIR)/pcalpapr.c
 
-writefil.o:	writefil.c pcaldefs.h pcalglob.h pcallang.h days.h months.h \
-		protos.h pcalinit.h
-	$(CC) $(CFLAGS) $(COPTS) -c writefil.c
+$(OBJDIR)/pcalutil.o:	$(SRCDIR)/pcalutil.c $(SRCDIR)/pcaldefs.h \
+			$(SRCDIR)/pcalglob.h $(SRCDIR)/pcallang.h \
+			$(SRCDIR)/protos.h
+	$(CC) $(CFLAGS) $(COPTS) -o $@ -c $(SRCDIR)/pcalutil.c
 
-$(PCALINIT): pcalinit.c
-	$(PCALINIT_CC) $(CFLAGS) $(LDFLAGS) $(COPTS) -o $(PCALINIT) pcalinit.c
+$(OBJDIR)/readfile.o:	$(SRCDIR)/readfile.c $(SRCDIR)/pcaldefs.h \
+			$(SRCDIR)/pcalglob.h $(SRCDIR)/pcallang.h \
+			$(SRCDIR)/protos.h
+	$(CC) $(CFLAGS) $(COPTS) -o $@ -c $(SRCDIR)/readfile.c
 
-pcalinit.h: $(PCALINIT) pcalinit.ps
-	./$(PCALINIT) pcalinit.ps pcalinit.h header
+# 
+# Note: Unlike the other C-source-based object file targets above, this target
+# for 'writefil.o' adds the '-I$(OBJDIR)' so that the 'pcalinit.h' file (which
+# is generated automatically at compile time from the 'pcalinit.ps' source,
+# using the 'pcalinit' execuatable) will be properly found when 'writefil.c'
+# code does '#include pcalinit.h'.
+# 
+$(OBJDIR)/writefil.o:	$(SRCDIR)/writefil.c $(SRCDIR)/pcaldefs.h \
+			$(SRCDIR)/pcalglob.h $(SRCDIR)/pcallang.h \
+			$(SRCDIR)/protos.h $(OBJDIR)/pcalinit.h \
+			$(SRCDIR)/pcalpapr.h 
+	$(CC) $(CFLAGS) $(COPTS) -I$(OBJDIR) -o $@ -c $(SRCDIR)/writefil.c
 
+# 
+# This target builds the 'pcalinit' executable utility, which is used to
+# convert the 'pcalinit.ps' file into a C header file named 'pcalinit.h'.
+# 
+$(EXECDIR)/$(PCALINIT): $(SRCDIR)/pcalinit.c
+	$(PCALINIT_CC) $(CFLAGS) $(LDFLAGS) $(COPTS) \
+		-o $(EXECDIR)/$(PCALINIT) $(SRCDIR)/pcalinit.c
+
+# 
+# This target runs the 'pcalinit' executable utility to convert the
+# 'pcalinit.ps' file into a C header file named 'pcalinit.h'.
+# 
+$(OBJDIR)/pcalinit.h: $(EXECDIR)/$(PCALINIT) $(SRCDIR)/pcalinit.ps
+	$(EXECDIR)/$(PCALINIT) $(SRCDIR)/pcalinit.ps $(OBJDIR)/pcalinit.h header
+
+# 
+# This target will delete everything except the 'pcal' executable.
+# 
 clean:
-	rm -f $(OBJECTS) $(PCALINIT) pcalinit.h pcal.cat $(TARFILE) \
-		$(ZFILE) $(UUCFILE)
+	rm -f $(OBJECTS) $(EXECDIR)/$(PCALINIT) $(OBJDIR)/pcalinit.h \
+		$(DOCDIR)/pcal.cat $(DOCDIR)/pcal-help.ps \
+		$(DOCDIR)/pcal-help.html $(DOCDIR)/pcal-help.txt
 
+# 
+# This target will delete everything, including the 'pcal' executable.
+# 
 clobber: clean
-	rm -f $(PCAL)
+	rm -f $(EXECDIR)/$(PCAL)
 
+# 
+# This target will delete everything and rebuild 'pcal' from scratch.
+# 
 fresh:	clobber $(PCAL)
 
-man:	pcal.man
-	nroff -man pcal.man > pcal.cat
+man:	$(DOCDIR)/pcal.man
+	nroff -man $(DOCDIR)/pcal.man > $(DOCDIR)/pcal.cat
+	groff -man -Tps $(DOCDIR)/pcal.man >$(DOCDIR)/pcal-help.ps
+	groff -man -Thtml $(DOCDIR)/pcal.man >$(DOCDIR)/pcal-help.html
+	groff -man -Tascii $(DOCDIR)/pcal.man >$(DOCDIR)/pcal-help.txt
 
-install:	$(PCAL) man
-	cp $(PCAL) $(BINDIR)
-	cp pcal.man $(MANDIR)/pcal.1
+install:	$(EXECDIR)/$(PCAL) man
+	cp $(EXECDIR)/$(PCAL) $(BINDIR)
+	cp $(DOCDIR)/pcal.man $(MANDIR)/pcal.1
 	$(PACK) $(MANDIR)/pcal.1
-	cp pcal.cat $(CATDIR)/pcal.1
+	cp $(DOCDIR)/pcal.cat $(CATDIR)/pcal.1
 	$(PACK) $(CATDIR)/pcal.1
-
-compress:
-	rm -rf $(TMP)/$(PCALTMP) $(TMP)/$(TARFILE) $(TARFILE) $(ZFILE)
-	mkdir $(TMP)/$(PCALTMP)
-	cp $(TARSRC) $(TMP)/$(PCALTMP)
-	cd $(TMP); $(TAR) cf $(TARFILE) $(PCALTMP)
-	mv $(TMP)/$(TARFILE) .
-	$(COMPRESS) $(TARFILE)
-	rm -rf $(TMP)/$(PCALTMP)
-	@ echo "Created $(ZFILE)"
-
-uuencode: compress
-	@ echo "# pcal v$(VERSION) - uuencoded/compressed Unix tar file" > $(UUCFILE)
-	@ echo "#" >> $(UUCFILE)
-	@ echo "# Last updated: `date`" >> $(UUCFILE)
-	@ echo "#" >> $(UUCFILE)
-	@ echo "# to extract:" >> $(UUCFILE)
-	@ echo "#" >> $(UUCFILE)
-	@ echo "# uudecode $(UUCFILE)" >> $(UUCFILE)
-	@ echo "# uncompress $(ZFILE)" >> $(UUCFILE)
-	@ echo "# tar xvf $(TARFILE)" >> $(UUCFILE)
-	@ echo "#" >> $(UUCFILE)
-	uuencode $(ZFILE) < $(ZFILE) >> $(UUCFILE)
-	@ echo "Created $(UUCFILE)"

@@ -1,14 +1,28 @@
-# Makefile for Pcal v4.7 under MS-DOS
+# Makefile for Pcal under MS-DOS
 #
+# v4.8.0: Bill Marr -- Change compiler command line to work under 
+#         Borland C++ v5.0
+# 
 # v4.5: "make clean" leaves pcal intact but removes other by-products;
 #       "make clobber" blows everything away;
 #	"make fresh" rebuilds pcal from scratch
 #
-# Uses TurboC command line compiler.
+# Uses TurboC or Borland C++ command line compiler.
 
-CC	= tcc
+# 
+# This is the old, pre-v4.8.0, TurboC compile command:
+# 
+### CC	= tcc
+# 
+# This is the new compile command, starting with 'pcal' v4.8.0.  It works with
+# the Borland C++ compiler v5.0.  It adds the '-g0' flag (to prevent halting
+# of the compilation after too many warning messages) and the '-mh' flag (huge
+# memory model).
+# 
+CC	= bcc -g0 -mh
 CFLAGS	= -DDOS
-OBJECTS = pcal.obj exprpars.obj moonphas.obj pcalutil.obj readfile.obj writefil.obj
+OBJECTS = pcal.obj exprpars.obj moonphas.obj pcalutil.obj readfile.obj \
+		writefil.obj pcalpapr.obj
 
 pcal.exe:	$(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS)
@@ -20,16 +34,19 @@ exprpars.obj:	exprpars.c pcaldefs.h
 moonphas.obj:	moonphas.c pcaldefs.h pcalglob.h
 	$(CC) $(CFLAGS) $(COPTS) -c moonphas.c
 
-pcal.obj:	pcal.c pcaldefs.h pcalglob.h pcallang.h days.h months.h protos.h
+pcal.obj:	pcal.c pcaldefs.h pcalglob.h pcallang.h protos.h
 	$(CC) $(CFLAGS) $(COPTS) -c pcal.c
 
-pcalutil.obj:	pcalutil.c pcaldefs.h pcalglob.h pcallang.h days.h months.h protos.h
+pcalutil.obj:	pcalutil.c pcaldefs.h pcalglob.h pcallang.h protos.h
 	$(CC) $(CFLAGS) $(COPTS) -c pcalutil.c
 
-readfile.obj:	readfile.c pcaldefs.h pcalglob.h pcallang.h days.h months.h protos.h
+pcalpapr.obj:	pcalpapr.c pcalpapr.h pcaldefs.h pcalglob.h 
+	$(CC) $(CFLAGS) $(COPTS) -c pcalpapr.c
+
+readfile.obj:	readfile.c pcaldefs.h pcalglob.h pcallang.h protos.h
 	$(CC) $(CFLAGS) $(COPTS) -c readfile.c
 
-writefil.obj:	writefil.c pcaldefs.h pcalglob.h pcallang.h days.h months.h protos.h pcalinit.h
+writefil.obj:	writefil.c pcaldefs.h pcalglob.h pcallang.h protos.h pcalinit.h
 	$(CC) $(CFLAGS) $(COPTS) -c writefil.c
 
 pcalinit.exe: pcalinit.c
