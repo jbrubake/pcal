@@ -1,0 +1,7 @@
+Exception: STATUS_ACCESS_VIOLATION at eip=004189AE
+eax=00000006 ebx=00000000 ecx=0000001F edx=0000001F esi=00000000 edi=0041BD00
+ebp=4B3E693C esp=0022FD78 program=f:\pcaltest\pcal-4.7.1\pcal.exe
+cs=001B ds=0023 es=0023 fs=0038 gs=0000 ss=0023
+Stack trace:
+Frame     Function  Args
+      3 [main] pcal 330 handle_exceptions: Error while dumping state (probably corrupted stack)

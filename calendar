@@ -1,0 +1,440 @@
+# Date file syntax:
+#
+#	1) Basic Syntax:
+#
+#	The following rules describe the syntax of date file entries:
+#
+#	  year <year>|all|*
+#
+#	  opt <options>
+#
+#	  note{/<number>} <month_spec> <text>
+#	  note{/<number>} <month> <text>
+#
+#	  if -A flag (American date formats) specified:
+#	    <month_name> <day>{*} {<text>}
+#	    <month><sep><day>{<sep><year>}{*} {<text>}
+#
+#	  if -E flag (European date formats) specified:
+#	    <day>{<sep>} <month_name>{*} {<text>}
+#	    <day>{<sep>} <month>{<sep>}{*} {<text>}
+#	    <day><sep><month>{<sep><year>}{*} {<text>}
+#
+#	  <ordinal> <day_name> in <month_spec>{*} {<text>}
+#	  {<ordinal>} <day_name> <prep> <date_spec>
+#
+#	  <holiday>
+#
+#	where
+#
+#	  {x}          means x is optional
+#
+#	  <date_spec> := any of the above date specs (not year, note, or opt)
+#	  <month_name> := first 3+ characters of name of month, or "all"
+#	  <month_spec> := <month_name>, or "year"
+#	  <day_name> := first 3+ characters of name of weekday, "day",
+#			"weekday", "workday", "holiday", "nonweekday",
+#			"nonworkday", "nonholiday", "new_moon",
+#			"first_quarter", "full_moon", or "last_quarter"
+#	  <ordinal> := ordinal number ("1st", "2nd", etc.), "first" .. "fifth",
+#			"last", "even", "odd", or "all"
+#	  <prep> := "before", "preceding", "after", "following", "nearest",
+#			"nearest_before", "nearest_after", "on_or_before", or
+#			"on_or_after"
+#	  <holiday> := "Christmas", "Thanksgiving", etc.
+#
+#	  <sep> := one or more non-numeric, non-space, non-'*' characters
+#	  <month>, <day>, <year> are the numeric forms
+#
+#	  <options> := any command-line option except -[cefhuvDU]
+#
+#	Comments start with '#' (unless escaped by '\') and run through
+#	end-of-line.
+#
+#	Holidays may be flagged by specifying '*' as the last character of the
+#	date field(s), e.g. "10/12* Columbus Day", "July 4* Independence
+#	Day", etc.  Any dates flagged as holidays will be printed in gray, and
+#	any associated text will appear adjacent to the date.
+#
+#	Note that the numeric date formats (mm/dd{/yy}, dd.mm{.yy}) support an
+#	optional year, which will become the subsequent default year.  The
+#	alphabetic date formats (month dd, dd month) do not support a year
+#	field; the "year yy" command is provided to reset the default year.
+#
+#	European dates may also be specified as "dd. mm." and "dd. month" if
+#	desired.
+#
+#	"year all" and "year *" specify that subsequent date specifications
+#	are to be wildcarded against every applicable year; this is in effect
+#	until the default year is explicitly reset as specified above.
+#
+#	"Floating" days may be specified in the date file as "first Mon in
+#	Sep", "last Mon in May", "4th Thu in Nov", etc.; any word may be used
+#	in place of "in".  "Relative floating" days (e.g. "Fri after 4th Thu
+#	in Nov") are also accepted; they may span month/year bounds.  Pcal
+#	also accepts date specs such as "all Friday{s} in October", "last
+#	Thursday in all", etc., and produces the expected results; "each" and
+#	"every" are accepted as synonyms for "all".  Negative ordinals are
+#	allowed; "-2nd" means "next to last".
+#
+#	"Floating" days may also be specified relative to a fixed date:
+#	"fourth Sunday before 12/25", etc; note, however, that only positive
+#	ordinals are meaningful in this context.
+#
+#	The words "day", "weekday", "workday", and "holiday" may be used as
+#	wildcards: "day" matches any day, "weekday" matches any day normally
+#	printed in black, "workday" matches any day normally printed in black
+#	and not explicitly flagged as a holiday, and "holiday" matches any day
+#	explicitly flagged as a holiday.  "Nonweekday", "nonworkday", and
+#	"nonholiday" are also supported and have the obvious meanings.  Moon
+#	phases may also appear as wildcards; "nm" is accepted as a synonym for
+#	"new_moon", "1q" and "fq" for "first_quarter", "fm" for "full_moon",
+#	and "3q", "lq", and "third_quarter" for "last_quarter".
+#
+#	"Odd" and "even" do not refer to the actual date; instead, "odd" means
+#	"alternate, starting with the first"; "even" means "alternate,
+#	starting with the second".  Thus, "odd Fridays in March" refers to the
+#	first, third, and (if present) fifth Fridays in March - not to those
+#	Fridays falling on odd dates.
+#
+#	"All" refers to each individual month; "year" refers to the year as an
+#	entity.  Thus "odd Fridays in all" refers to the first/third/fifth
+#	Friday of each month, while "odd Fridays in year" refers to the first
+#	Friday of January and every other Friday thereafter.
+#
+#	"Nearest", "nearest_before", and "nearest_after" refer to the nearest
+#	weekday or wildcard day with respect to the specified date.
+#	"Nearest_before" and "nearest_after" allow the user to specify how
+#	pcal is to disambiguate between two dates that are equally near:
+#	e.g., "nonweekday nearest_before [Wed.] 9/25/96" refers to Sunday,
+#	9/22 while "nonweekday nearest_after 9/25/96" refers to Saturday,
+#	9/28.  (Note that "nearest_before" and "nearest_after" are equivalent
+#	to "nearest" when no such ambiguity exists: e.g., "nonweekday
+#	nearest_before [Thu.] 9/26/96" refers to Saturday, 9/28.)
+#
+#	Additional notes may be propagated to an empty calendar box by the
+#	inclusion of one or more lines of the form "note{/<number>} <month>
+#	<text>", where <month> may be numeric or alphabetic; "note{/<number>}
+#	all <text>" propagates <text> to each month in the current year.
+#	<number> is an optional positive or negative number specifying the
+#	empty box where the associated text is to be placed: if positive,
+#	Pcal counts forward from the first empty box; if negative, Pcal counts
+#	backward from the last empty box.  Thus, "note/1 ..."  places the
+#	associated text in the first empty box, and "note/-3 ..."  in the
+#	third-to-last; the default is -1 (last empty box).  (Note that if the
+#	-S option is used, it must be specified either on the command line or
+#	prior to any "note" lines in the date file.)
+#
+#	`troff'-style escape sequences \fB, \fI, \fP, and \fR may be used to
+#	set the font style to Bold, Italic, the previous font style, or Roman
+#	respectively.  For those more familiar with HTML, <B>, <I>, and </B>
+#	or </I> may be used instead to set the font style to Bold, Italic, or
+#	the previous font style respectively.  The font style is reset to
+#	Roman after each line break.
+#
+#
+#	2) Format specifiers:
+#
+#	Pcal also allows format specifiers in the text (and foot strings - cf.
+#	the -L, -C, -R, and -N options); each will be replaced by its
+#	equivalent string as outlined in the table below.  (Most of these are
+#	derived from the strftime() function; %[lnouwMD0+-] are Pcal-specific.)
+#
+#		%a : abbreviated weekday
+#		%A : full weekday
+#		%b : abbreviated month name
+#		%B : full month name
+#		%d : day of month (1-31)
+#		%j : day of year (1-366)
+#		%l : days left in year (0-365)
+#		%m : month (1-12)
+#		%u : week number (1-54)
+#		%U : week number (0-53)
+#		%w : week number (1-54)
+#		%W : week number (0-53)
+#		%y : year w/o century (00-99)
+#		%Y : year w/century
+#		%% : '%' character
+#
+#		%o : print number as ordinal
+#		%0 : print number with leading zeroes
+#		%+ : use following month or year
+#		%- : use previous month or year
+#		%{+N}[DWMY] : adjust date by +N days/weeks/months/years
+#		%{-N}[DWMY] : adjust date by -N days/weeks/months/years
+#
+#	%u considers the week containing 1/1 as week 1 and the following
+#	logical Sunday (the first day of the week as printed; cf. the -F
+#	flag) as the start of week 2; %U considers the first logical Sunday as
+#	the first day of week 1.  %w and %W behave like %u and %U
+#	respectively, but use the first logical Monday instead.  (Note that %w
+#	has a different meaning to strftime().)
+#
+#	%o prints a number as an ordinal, with the appropriate suffix ("st",
+#	"nd", "rd", or "th" in English) appended; for example, "%od" prints
+#	the day of the month as "1st", "2nd", "3rd", etc.
+#
+#	Unlike strftime(), Pcal's default is to print numbers (except %y)
+#	without leading zeroes.  If leading zeroes are desired, the '0' prefix
+#	may be used; for example, "%0j" prints the day of year as 001-365.
+#
+#	%+ and %- direct Pcal to substitute the following/previous month/year
+#	in the following [bBmyY] specifier; for example, "%+B" prints the name
+#	of the next month.
+#
+#	%{[+-]N}[DWMY] do not print anything, but instead adjust the working
+#	date by +-N days (D), weeks (W), months (M), or years (Y); subsequent
+#	format specifiers use the adjusted date instead of the current date.
+#	For example, "%+1M %B %Y" adjusts the date forward by one month and
+#	then prints the resulting month and year ("January 1991" in December,
+#	1990); "%-2W %b %d" adjusts the date backward by two weeks and prints
+#	the resulting month and day ("Jul 26" on August 9).
+#
+#	Such date adjustments are normally cumulative; for example, "%+1Y%-1D"
+#	adjusts the date forward by one year and then backward by one day.  If
+#	%D or %M is specified alone (or if N is zero), Pcal restores the
+#	original date.  (Note that %M has a different meaning to strftime().)
+#
+#	The "Notes" box uses the first of the current month as the default
+#	date.  All foot strings use the first of the current month in single-
+#	month mode and the first of the starting month in whole-year mode.
+#
+#
+#	3) Preprocessing:
+#
+#	Simple cpp-like functionality is provided.  The date file may include
+#	the following commands, which work like their cpp counterparts:
+#
+#		define <sym>
+#		undef <sym>
+#
+#		if{{n}def} <expr>
+#		   ...
+#		{ elif <expr>
+#		   ... }*
+#		{ else
+#		   ... }
+#		endif
+#
+#		include{?} <file>
+#
+#	Note that these do not start with '#', which is reserved as a comment
+#	character.
+#
+#	<sym> is a symbol name consisting of a letter followed by zero or more
+#	letters, digits, or underscores ('_').  Symbol names are always
+#	treated in a case-insensitive manner.
+#
+#	<expr> is an expression consisting of symbol names joined by the
+#	logical operators (in order of precedence, high to low) '!'  (unary
+#	negate), '&' (and), '^' (exclusive or), and '|' (inclusive or).  '&&'
+#	and '||' are accepted as synonyms for '&' and '|' respectively; the
+#	order of evaluation may be altered by the use of parentheses.  A
+#	symbol whose name is currently defined evaluates to TRUE; one whose
+#	name is not currently defined evaluates to FALSE.  Thus "ifdef A | B |
+#	C" is TRUE if any of the symbols A, B, and C is currently defined, and
+#	"ifdef A & B & C" is TRUE if all of them are.
+#
+#	"ifndef A | B | C" is equivalent to "ifdef !(A | B | C)" (or, using
+#	DeMorgan's Law, "ifdef !A & !B & !C") - in other words, TRUE if none
+#	of the symbols A, B, and C is currently defined.
+#
+#	"if" is accepted as a synonym for "ifdef".
+#
+#	"elif A" is TRUE if A is defined.  Multiple "elif" clauses may appear;
+#	at most one "if{{n}def}", "elif", or "else" clause in a given block
+#	will be processed.
+#
+#	"define" alone deletes all the current definitions; "if{def}" alone is
+#	always false; "ifndef" alone is always true.
+#
+#	The file name in the "include" directive may optionally be surrounded
+#	by "" or <>; in any case, path names are taken to be relative to the
+#	location of the file containing the "include" directive.  If the
+#	string "%y" appears in the file name, it is replaced by the last two
+#	digits of the current year or is expanded to all applicable years if
+#	"year all" is in effect.  An alternate form, "include?", directs pcal
+#	to silently continue if the specified file cannot be opened. 
+#
+#
+#	4) Miscellaneous:
+#
+#	The "-w" flag defines the symbol "whole_year", which may be tested in
+#	the same manner as any user-defined symbol.  Similarly, the "-a XX"
+#	flag defines the symbol "lang_XX", where XX is the two-character
+#	abbreviation for the selected language.
+#
+#	Pcal also supports several predefined holidays; type "pcal -h" to
+#	generate a list of these.
+
+
+# "opt" lines to override program defaults
+
+# select alternate fonts (try the Helvetica fonts if your printer doesn't
+# support AvantGarde)
+opt -d AvantGarde-Book/30 -t AvantGarde-Book -n Helvetica/8
+#opt -d Helvetica-Bold/30 -t Helvetica-Bold -n Helvetica/8
+
+opt -A			# dates below are American-style
+
+opt -s 0.6/0.97		# override default date/fill box shading
+opt -M 			# moon icons on all days
+ifndef whole_year
+  opt -O		# print outlined characters if "-w" NOT specified
+endif
+
+undef no_such_sym	# not an error to undef nonexistent symbol
+
+year *			# following entries apply to every year
+
+# include file "birthdays" if it exists; continue silently if it doesn't
+
+include? birthdays	# add personal list of birthdays
+
+# note to be propagated to "Notes" box (-2 = bottom center) for all months
+
+opt -N Meetings:	# alternate header for notes box
+note/-2 all		\fIEngineering staff meeting\fP Wednesday, 1:30 PM
+
+# examples of format specifiers
+
+all Monday in all		Fiscal week %W.%y	# e.g. 26.91
+last workday in all		%B status meeting	# substitute month name
+2nd workday in all		\fB%-B\fP status report due # use previous month
+
+# some sample US holidays (flagged by '*') and other days of note
+
+# note the \fB and <B> escape sequences to print the text in boldface (and
+# the "ifdef v4_6" to avoid confusing earlier versions of Pcal)
+
+ifdef v4_6 || v4_7
+  1/1*				\fBNew Year's Day\fR
+  3rd Monday in Jan*		<B>Martin Luther King Day</B>
+else
+  1/1*				New Year's Day
+  3rd Monday in Jan*		Martin Luther King Day
+endif
+
+3rd Monday in Feb		Presidents' Day
+Feb 14				Valentine's Day
+
+# any Pcal users in Alaska?
+ifdef AK
+  fifth Sat on_or_after 02/01	Iditarod starts
+endif
+
+3/7				Arthur Lee b. 1945
+3/17				St. Patrick's Day
+
+# v4.7 supports HTML tags and predefines the symbol "html" if -H is set
+if v4_7 && html
+4/8		<a href=http://www.LauraNyro.com>Laura Nyro</a> d. 1997
+else
+4/8		Laura Nyro d. 1997
+endif
+
+# Easter is a predefined holiday, calculated by Pcal for each year
+
+Easter*				Easter Sunday
+
+first Sunday in April		DST begins
+
+# another local holiday - included only if "MA" or "ME" defined
+ifdef MA || ME
+  3rd Monday in Apr		Patriots' Day (MA, ME)
+endif
+
+# HTML-like tags to print Italic text
+ifdef v4_6 || v4_7
+  5/16				<i>Pet Sounds</i> released, 1966
+else
+  5/16				Pet Sounds released, 1966
+endif
+last Monday in May*		Memorial Day
+
+6/2				Marquis de Sade b. 1740 - whip up a cake!
+
+6/14				Flag Day
+
+7/4*				Independence Day
+# note clever use of %-<n>Y directive in example below
+7/15				Pcal developer A.W. Rogers' %-1952Y%oY birthday
+
+second Saturday in July			Moxie Days, Lisbon ME
+Sunday after second Saturday in July	Moxie Days, Lisbon ME
+
+if v4_7 && html
+7/20		<a href=http://metro.turnpike.net/~rogers/moulty.html>Moulty</a> loses left hand, 1959
+else
+7/20		Moulty loses left hand, 1959
+endif
+
+if v4_7 && html
+8/9		<a href=http://www.unitedmedia.com/comics/dilbert/>Dilbert</a>'s tie flat, 1994
+else
+8/9		Dilbert's tie flat, 1994
+endif
+
+1st Monday in Sep*		Labor Day
+
+second Monday in Oct*		Columbus Day (observed)
+if v4_7 && html
+10/16		First <a href=http://www.geocities.com/Hollywood/Lot/9440/>Raspberries> live performance, 1970
+10/18		<a href=http://www.LauraNyro.com>Laura Nyro</a> b. 1947
+else
+10/16		First Raspberries live performance, 1970
+10/18		Laura Nyro b. 1947
+endif
+last Sunday in Oct		DST ends
+10/31				Halloween
+
+Tue after first Mon in Nov	Election Day
+if v4_7 && html
+11/9	<a href=http://www.netuser.com/~erp/Louie_Louie.html>\"Louie Louie\"</a> enters Billboard Hot 100, 1963
+else
+11/9				\"Louie Louie\" enters Billboard Hot 100, 1963
+endif
+11/11*				Veterans' Day # (observed)
+
+# Thanksgiving and Christmas are also predefined holidays
+
+Thanksgiving*			Thanksgiving Day
+day after Thanksgiving*
+
+day before Christmas* 		Christmas Eve
+
+# if the current language is German ("de" = Deutsch), select alternate text
+# for Christmas Day
+if lang_de
+  Christmas*			Weihnacht
+else
+  Christmas*			Christmas Day
+endif
+
+last day in Dec*		New Year's Eve
+
+2nd full_moon in all		Blue Moon
+
+# if the symbol "meetings" has been defined, print text on the next-to-last
+# Monday of each month
+ifdef meetings
+  -2nd Monday in all		Monthly staff meeting
+endif
+
+# if the symbol "whole_year" has been defined (either explicitly or implicitly
+# via "-w"), print a center foot string containing the first and last dates of
+# the year
+ifdef whole_year
+  opt -C "Fiscal year %B %d, %Y - %+1Y%-1D%B %d, %Y"
+endif
+
+# if the symbol "paydays" has been defined, print text on alternate Fridays
+# (starting with the second Friday of the year in 2000, first Friday in 2001)
+ifdef paydays
+  year 2000						# reset year explicitly
+  even Fridays in year		Pay Day
+  year 2001						# reset year explicitly
+  odd Fridays in year		Pay Day
+endif
+
+1/1/01*				New Year's Day		# reset year implicitly

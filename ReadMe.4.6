@@ -1,0 +1,259 @@
+"Pcal" Version 4.6
+
+This is a new release of "Pcal", the PostScript calendar program.  The major
+new features are:
+
+	a) the "-a" flag to select a language other than English;
+
+	b) the "-T" flag (and \f* escape sequences) to select bold or italic
+	   typefaces in date/note box text;
+
+	c) the "year all" directive to wildcard date file entries against
+	   all applicable years;
+
+	d) the distribution includes .html and .cgi files for setting up a
+	   Pcal server using Netscape (maybe others; I haven't tried them)
+	   under Un*x;
+
+	e) the date box height for single-month portrait-mode calendars
+	   has been expanded from 80 points to 117;
+
+	f) the distribution includes moon phase files for 1997 and 1998
+
+	g) two new keywords, "nearest_before" and "nearest_after", are
+	   supported.
+
+	h) the default century has been changed from 1900 to the current
+	   century.
+
+All are described in detail below.
+
+
+Major changes:
+
+    1) Of interest to Pcal hackers and installers:
+
+      .	The following new files have been added to the distribution:
+
+		days.h		day names in multiple languages (see -a below)
+		months.h	month names in multiple languages
+		calendar.gk	calendar with Greek holidays (in Greek)
+		calendar.uk	calendar with British holidays
+		fonttest_e	test Esperanto font mapping (see -a below)
+
+		cvt7to8.c	To avoid mailer problems, days.h, months.h,
+		cvt8to7.c	and calendar.gk are distributed in 7-bit
+				format (8-bit characters are represented as
+				octal escape sequences).  cvt7to8.c converts
+				these files to true 8-bit format to
+				facilitate editing by users with 8-bit
+				editors; cvt8to7.c converts them back to
+				7-bit format for mailing.
+
+	The distribution also includes the "ReadMe" files from several
+	earlier releases.
+
+      .	moon94 and moon95 have been replaced with moon97 and moon98.
+
+      .	My [AWR] site finally got a color printer, and after playing with it
+	for a while I decided I prefer the appearance of black outlines
+	(dates when -O flag is specified) to color outlines; if you agree,
+	define the symbol OUTLINE_BLACK in the COPTS line of your Makefile.
+
+      .	The Un*x Makefile supports selecting the default language (see
+	-a description below).
+
+      .	The Un*x Makefile has two new targets: "compress" to create a
+	compressed 'tar' file (suitable for installation in a public ftp
+	directory, WWW page, etc.) and "uuencode" to create a uuencoded
+	version thereof.
+
+
+    2) New command-line options:
+
+      .	Pcal now supports the -a <language> flag to generate calendars
+	in the following languages:
+
+		de	German
+		en	English [default]
+		eo	Esperanto
+		es	Spanish
+		fr	French
+		gr	Greek
+		it	Italian
+
+	In order to display diacritical marks, languages other than English
+	require that the fonts be remapped (Esperanto uses a stripped-down
+	version of ISO 8859-3; the others use "Latin1").  If no remapping
+	is specified, \fIpcal\fP selects a remapping appropriate to the
+	selected language; note that the Greek language also requires an
+	ELOT-928 font (available from Angelo Haritsis, ah@doc.ic.ac.uk).
+
+	If Esperanto is selected, Pcal converts [cghjsuCGHJSU][xX^] and
+	[uU]~ to the corresponding accented character; e.g. "jxauxdo"
+	"j^au~do", or any equivalent form will print as "j-circumflex a
+	u-breve d o".
+
+	Day and month names in the date file may be expressed in either
+	the default language specified at compile-time or the language
+	selected on the command line.
+
+	Pcal predefines the symbol "lang_XX" where XX is the two-character
+	abbreviation for the current language.
+
+      .	Pcal now supports the -T [B|I|R] flag to select the typeface (Bold,
+	Italic, or Roman) for printing date/note text (see below).  This flag
+	may be specified multiple times within the date file (via "opt") to
+	reset the font style on the fly - for example, to print all holidays
+	in Bold.  (Also see "'troff'-like escape sequences" below.)
+	
+
+    3) New date file functionality:
+
+      .	Pcal now supports the "year all" (or "year *") directive to address
+	a long-standing Pcal deficiency: the requirement that recurring dates
+	appear in the date file once for each year.  While "year all" is in
+	effect, pcal will wildcard each date specification (and note box
+	entry) in the date file into a date entry for each applicable year,
+	as determined by the starting month/year and number of months.
+
+	"Year all" is disabled by a date of the form "mm/dd/yy" or a "year
+	yy" directive.
+
+      . Pcal now supports 'troff'-like escape sequences to change the style
+	of the font used for printing the text: \fB = Bold; \fI = Italic;
+	\fR = Roman; \fP = previous font.  (Since there is no consistent
+	means of converting a generic font name to its bold or Italic
+	equivalent, these are simulated through overstrikes and 'makefont'
+	respectively.)  Pcal also supports their HTML equivalents: <B> =
+	Bold; <I> = Italic; </B> or </I> = previous font (lower case is
+	also accepted).
+
+	Each of these escape sequences causes a word break, so the effective
+	granularity is word-level, not character-level.  Maybe some day...
+
+	The font style is reset to Roman following each line break.
+
+      . Pcal now supports three Orthodox Easter related dates: "GEaster",
+	"Gstgeorge", "Gmarcus".
+
+      .	Pcal now supports the "nearest_before" and "nearest_after" keywords
+	to specify how pcal is to disambiguate between two dates that are
+	equally near; e.g., "nonworkday nearest_before [Wed.] 9/25/96" refers
+	to Sunday, 9/22 and "nonworkday nearest_after 9/25/96" refers to
+	Saturday, 9/28.  (Note that in the absence of any such ambiguity,
+	"nearest" takes precedence over "before" or "after": "nonworkday
+	nearest_before 9/26/96" refers to Saturday, 9/28.)
+
+
+    4) Other new functionality:
+
+      . Pcal predefines the symbol v4_6; this allows the user to ifdef out
+	v4.6-specific constructs from date files that might also be used
+	by older versions of Pcal.
+
+      .	Pcal compresses the date font text as necessary to prevent overflow
+	of extremely long words into the next box.
+
+      . The distribution now includes pcal.html (HTML form to generate
+	single-month calendars), pcalw.html (HTML form to generate whole-year
+	calendars) and pcal.cgi (common /bin/sh script to parse the options
+	selected on either of the HTML forms and pass them to pcal).  (You
+	will need to tweak site-specific paths in all of them.)
+
+      .	The date box height for single-month portrait-mode calendars has
+	been expanded from 80 points to 117.  If you prefer the original
+	date box proportions (basically a scaled-down landscape-mode
+	calendar), compile with -DORIG_BOX_HEIGHT.
+
+      .	The default century for two-digit years has been changed from 1900
+	to the current century.  This presumes standard Un*x behavior: that
+	the "tm_year" field in the "tm" struct (<time.h>) represents the
+	current year minus 1900, not the current year itself; if this is not
+	the case on your system, change the TM_YEAR definition (pcaldefs.h)
+	accordingly.
+
+
+    5) Bug fixes:
+
+      .	Fixed a long-standing (but not previously reported) bug in readfile.c
+	which caused Pcal to crash upon an "undef <sym>" in the date file.
+
+      .	Depending on the underlying hardware, a bit pattern of all zeroes
+	may not necessarily be a null (or even a valid) pointer; pointers
+	previously assumed initialized by a calloc() call are now initialized
+	explicitly to NULL.
+
+      .	The Un*x "calendar" utility interprets asterisks as wildcards;
+	consequently, v4.6 does not propagate asterisks from the date file
+	to the -c output (note also that holidays with no associated text
+	will not be printed).  To retain them (as per v4.5), define the
+	symbol KEEP_ASTERISKS in the COPTS line of your Makefile.
+
+      .	Vestiges of a never-implemented experiment have been deleted from
+	next_token() in exprpars.c.
+
+      .	Fixed a long-standing bug where "note/1" text would overwrite the
+	small calendar for the next month if the "-k" flag was specified and
+	the month began on Sunday.  [merged from v4.7 12/21/97]
+
+
+Credits:
+
+The original calendar PostScript was Copyright (c) 1987 by Patrick Wood and
+Pipeline Associates, Inc. with permission to modify and redistribute.
+
+The following people contributed to Pcal v4.6:
+
+	European language and Greek Orthodox calendar
+		support:				Angelo Haritsis
+	Esperanto support:				Andrew Rogers
+	"nearest_*" suggestion:				Brad Knowles
+	Updated VMS help file:				Richard Dyson
+	Other C and PostScript code:			Andrew Rogers
+ 
+For a list of all known contributors to date, see the Orig.ReadMe file and
+topline comments in pcal.c.
+
+Future updates of pcal v4.6 will be available at the following URL:
+
+	http://www.geocities.com/SunsetStrip/Palms/5555/pcal.4.6.tar.Z.txt
+
+
+Andrew W. Rogers
+21 December 1997
+
+
+PS: Here's something handy - an alphabetical list of the Pcal options (v4.6)
+and their meanings:
+
+
+------------------------------- clip 'n' save -------------------------------
+
+-A  parse American date format		-a  select language for months/days
+-B  don't fill unused boxes		-b  print day in black
+-C  define center foot string		-c  generate "calendar" utility input
+-D  define preprocessor symbol		-d  select alternate day font
+-E  parse European date format		-e  print empty calendar
+-F  define alternate starting day	-f  select alternate date file
+-G  print day as gray-filled outline	-g  print day in gray
+-H  <unused>				-h  generate full help message
+-I  re-initialize program defaults	-i  <unused>
+-J  print Julian day and days left	-j  print Julian day (day of year)
+-K  prev in first box, next in last	-k  prev/next in first two boxes
+-L  define left foot string		-l  landscape mode
+-M  print all moons			-m  print new/half/full moons
+-N  define heading for notes box	-n  select alternate notes font
+-O  print day as empty outline		-o  select alternate output file
+-P  <unused>				-p  portrait mode
+-Q  <unused>				-q  <unused>
+-R  define right foot string		-r  remap fonts for 8-bit characters
+-S  suppress prev/next calendars	-s  define date/fill box shading
+-T  select typeface for date/note text	-t  select alternate title font
+-U  undefine preprocessor symbol	-u  generate parameter usage message
+-V  <unused>				-v  generate version ID
+-W  <unused>				-w  print whole year per page
+-X  X-axis transformation		-x  X-axis scale factor
+-Y  Y-axis transformation		-y  Y-axis scale factor
+-Z  generate debugging information	-z  specify alternate time zone
+-#  print multiple copies of each page

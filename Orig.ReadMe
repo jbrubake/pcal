@@ -1,0 +1,22 @@
+"Pcal" is a program to print PostScript calendars for any month and year.
+By default, it looks for a file in the home directory named "calendar"
+for entries with leading dates matching dates on the calendar, and prints
+any following text under the appropriate day.
+
+The program may be a little System V flavored (getopt, time routines)
+but should be easily portable to other vintages of UNIX.
+
+Pcal is the combined effort of several people, most notably Patrick Wood
+of Pipeline Associates, Inc. for the original PostScript code and Bill
+Vogel of AT&T for the calendar file mechanism.  My part was simple
+translation to a "C" program, the addition of a couple options and a more
+generalized date searching routine (oh yes, and a manual page :-).
+
+The original calendar PostScript was Copyright (c) 1987 by Patrick Wood
+and Pipeline Associates, Inc. with permission to modify and redistribute.
+Please retain this README file with the package.
+
+
+Ken Keirnan
+Pacific Bell
+San Ramon, CA.

@@ -1,0 +1,191 @@
+"Pcal" Version 4.3
+
+This is a new release of "Pcal", the PostScript calendar program.  (An earlier
+release, 4.2, was not distributed publicly.)
+
+Major changes:
+
+    1) Of interest to Pcal hackers, installers, and power users :-) :
+
+      .	The promised comments about X_OK in pcalutil.c are now actually there.
+
+      .	Pcal now generates debugging information (see -Z flag below).
+
+
+    2) New command-line options:
+
+      .	The "-c" flag has been added; this directs Pcal to generate a date
+	file suitable for input to the Un*x "calendar" utility (instead of
+	a PostScript file).  This file may also be used as input for
+	subsequent runs of Pcal, but be forewarned that "opt" lines,
+	preprocessing directives, comments, etc. will be lost.  (Idea
+	courtesy of Bruce Mohler.)
+
+      .	The "-k" and "-K" flags have been added.  The former moves the two
+	small calendars to the first two boxes (upper-left corner) while
+	the latter splits them so the previous month is in the first box
+	and the next month is in the last.  Should there be a conflict
+	with a date, the body of the calendar is moved down one row.  (Why
+	"-[kK]"?  Well, "k" sort of sounds like "calendar", and anyway all
+	the letters that made any more sense were taken.)
+
+      .	The "-N" flag has been added; this allows the user to override the
+	default "Notes" header in the notes box.  If set to "", Pcal will
+	not print a header in the notes box.
+
+      .	The "-u" flag has been added; this prints the version information
+	and parameter usage message to stdout and terminates normally.
+
+      .	The "-s" flag has been added; this allows the user to override the
+	default values for date and/or fill box shading.  For example,
+
+		-s 0.45/0.98
+
+	sets the date shading to 0.45 (white = 1, black = 0) and the fill box
+	shading to 0.98; this looks good on the whole-year calendars.  The
+	date and fill box shading values may be changed independently; e.g.
+	"-s 0.45" or "-s /0.98".
+
+      .	The "-S" flag has been added; this suppresses generation of the
+	small calendars in the lower right corner, thus freeing two more
+	boxes for notes (cf. "note/<number>" below).
+
+      .	The "-Z" flag has been added to print debugging information of interest
+	primarily to Pcal hackers.  This flag is a "hidden" flag; it does not
+	appear on the man page or as part of the usage message.  At present,
+	the following options are supported:
+
+		-ZD	print dates and text as read from date file
+		-ZF	print date file search paths
+		-ZM	print moon phases and identify quarters
+		-ZO	print option flags and where set
+		-ZP	print "preprocessor" debug info
+		-ZT	print dates and text as written to output file
+		-Z	turn off all debugging info
+
+	The subflags may be combined: e.g., "-ZDF" is equivalent to "-ZD -ZF".
+	All of the aforementioned debugging information is written to stderr.
+
+	(This brings the grand total up to 41 flags; -[aiqrzHPQTVW] are still
+	unused.)
+
+
+    3) New date file functionality:
+
+      .	The file name in the "include" directive may contain the string "%y",
+	which will be replaced by the last two digits of the current year.
+
+      .	Wildcards "new_moon", "first_quarter", "full_moon", and "last_quarter"
+	(plus appropriate synonyms) are now accepted in the date file.
+
+      .	If the "-w" flag has been specified (in PCAL_OPTS, on the command
+	line, or in an "opt" line), Pcal automatically defines the symbol
+	"whole_year".  This allows the user to specify different "gray"
+	character styles and densities, alternate foot strings, etc.,
+	depending on whether s/he is generating a single month or a full year:
+
+		ifdef whole_year
+		 opt -s 0.45/0.98	# improve contrast in whole-year mode
+		endif
+
+      .	The keyword "nearest" has been added, allowing constructs such as
+	"workday nearest every 10th".  (Thanks to Andy Fyfe for the idea
+	and code.)  In this example, Pcal would look first at the 10th,
+	then at the 11th, 9th, 12th, 8th, etc. until a workday is found.
+	(If you would prefer to disambiguate "nearest" in favor of the
+	earlier date, see the comments by "NEAREST_INCR" in pcaldefs.h.)
+
+      .	The preprocessor now accepts "if" as a synonym for "ifdef".
+
+      .	The preprocessor now accepts "elif" as per most recent flavors of
+	cpp; "elif A" is true if A is defined.  Multiple "elif" clauses
+	are allowed; as in cpp, at most one "if{{n}def}", "elif", or "else"
+	clause will be processed per block.
+
+      .	The user may place "Notes" text in any empty box: Pcal now supports
+	"note/<n>", where <n> is a positive or negative integer.  If <n>
+	is positive, Pcal counts forward from the first empty box; if
+	negative, backward from the last.  Default is -1 (last empty box:
+	as before, on the bottom row adjacent to the small calendars
+	unless -S is specified).  (Thanks to Geoff Kuenning for the idea.)  
+
+
+    4) Other new functionality:
+
+      .	A new message, "no match for wildcard", has been added.
+
+      .	The date sizes for the small and medium calendars have been enlarged
+	for legibility.
+
+      .	If Pcal can't find the moon file in the date file's directory, it
+	looks in the directory where the Pcal executable lives.  This allows
+	all users to access the same moon file; in fact, they need not even
+	know of its existence.
+
+      .	The "%u" and "%w" format specifiers have been added.  These behave
+	much like "%U" and "%W" except that they treat the week containing
+	January 1 (instead of the first full week) as week 01, as done by
+	some companies.
+
+      .	The %{[+-]<n>}[DWMY] format specifiers have been added.  These do
+	not print anything per se, but instead adjust the working date by
+	[+-]<n> days (D), weeks (W), months (M), or years (Y); subsequent
+	format specifiers reference the adjusted date.  %D or %M alone
+	reset the original date.
+
+	Since the above format specifiers do not print anything, expand_fmt()
+	and print_word() were revised further to avoid generating null words.
+
+      .	The "moon92" file has been supplied.
+
+      .	The user may now override the default notes font size as well as
+	the font name:
+
+		pcal -n Helvetica/8
+
+	sets the font to 8-point Helvetica.  (This is the easy one.  User
+	override of the other font sizes may appear later.)
+
+
+    5) Bug fixes:
+
+      .	The algorithm for finding the date file has been changed slightly:
+	pcal searches the current directory before PCAL_DIR for a user-
+	defined date file.  More importantly, the man page has been
+	rewritten to accurately describe the search algorithm; the
+	documentation had never been correct.
+
+      .	Pcal no longer requires a space between -[LCRN] and the following
+	quoted string in an "opt" line; loadwords() has been made smart enough
+	to split the flag and the string into separate words.
+
+      .	Pcal has been made much smarter about escape sequences (octal or
+	hex formats) and now handles them on the command line in addition
+	to "opt" lines in the date file.
+
+      .	MIN_ORD_LEN has been expanded from 3 to 4 in order to distinguish
+	"every" from "even".
+
+      .	is_quarter() has been revised to eliminate the occasional duplicate
+	(1/92) or missing (12/92) quarter moon in -m mode.
+
+
+Credits:
+
+The original calendar PostScript was Copyright (c) 1987 by Patrick Wood
+and Pipeline Associates, Inc. with permission to modify and redistribute.
+Many others have worked on it since; see the Orig.ReadMe file and topline
+comments in pcal.c.
+
+The following people contributed to Pcal v4.2 and v4.3:
+
+	Overall coordinator:				Joe Brownlee
+	"nearest" keyword:				Andy Fyfe
+	"note/n" suggestion:				Geoff Kuenning
+	VMS support, moon phase algorithm:		Richard Dyson
+	"-c" suggestion, new SYNOPSIS for man page:	Bruce Mohler
+	Other C and PostScript code:			Andrew Rogers
+
+
+Andrew W. Rogers
+08 December 1991 

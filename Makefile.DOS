@@ -1,0 +1,48 @@
+# Makefile for Pcal v4.7 under MS-DOS
+#
+# v4.5: "make clean" leaves pcal intact but removes other by-products;
+#       "make clobber" blows everything away;
+#	"make fresh" rebuilds pcal from scratch
+#
+# Uses TurboC command line compiler.
+
+CC	= tcc
+CFLAGS	= -DDOS
+OBJECTS = pcal.obj exprpars.obj moonphas.obj pcalutil.obj readfile.obj writefil.obj
+
+pcal.exe:	$(OBJECTS)
+	$(CC) $(LDFLAGS) $(OBJECTS)
+	@ echo + Build of pcal complete!
+
+exprpars.obj:	exprpars.c pcaldefs.h
+	$(CC) $(CFLAGS) $(COPTS) -c exprpars.c
+
+moonphas.obj:	moonphas.c pcaldefs.h pcalglob.h
+	$(CC) $(CFLAGS) $(COPTS) -c moonphas.c
+
+pcal.obj:	pcal.c pcaldefs.h pcalglob.h pcallang.h days.h months.h protos.h
+	$(CC) $(CFLAGS) $(COPTS) -c pcal.c
+
+pcalutil.obj:	pcalutil.c pcaldefs.h pcalglob.h pcallang.h days.h months.h protos.h
+	$(CC) $(CFLAGS) $(COPTS) -c pcalutil.c
+
+readfile.obj:	readfile.c pcaldefs.h pcalglob.h pcallang.h days.h months.h protos.h
+	$(CC) $(CFLAGS) $(COPTS) -c readfile.c
+
+writefil.obj:	writefil.c pcaldefs.h pcalglob.h pcallang.h days.h months.h protos.h pcalinit.h
+	$(CC) $(CFLAGS) $(COPTS) -c writefil.c
+
+pcalinit.exe: pcalinit.c
+	$(CC) $(CFLAGS) $(LDFLAGS) $(COPTS) pcalinit.c
+
+pcalinit.h: pcalinit.exe pcalinit.ps
+	pcalinit pcalinit.ps pcalinit.h header
+
+clean:
+	del *.obj
+	del pcalinit.h
+
+clobber: clean
+	del pcalinit.exe
+
+fresh: clobber pcal.exe

@@ -1,0 +1,1159 @@
+% pcalinit.ps - provides the PostScript routines for pcal.c
+%
+% 4.7	modified by Andrew Rogers:
+%
+%	parameterize additional translation and scaling factors for use
+%	with alternate paper sizes (A4 so far; others could follow)
+%
+%	move top of calendar boxes from 35 to 0
+%
+% 4.6	modified by Andrew Rogers:
+%
+%	move date box dimensions to writefil.c to support taller date boxes
+%	in single-month/portrait mode (cf. pcaldefs.h)
+%
+%	split ps_prtday_rgb into ps_prtday_rgb_orig (-O: outline in selected
+%	color) vs. ps_prtday_rgb_alt (-O: outline in black); cf. writefil.c
+%
+%       add support for Esperanto characters
+%
+%	support bold (.b), Italic (.i), and Roman (.r) fonts on the fly
+%
+%	compress text strings as necessary to avoid overflow (cf. prstr{})
+%
+% 4.5	modified by Andrew Rogers:
+%
+%	add ps_setfill_bw and ps_setfill_rgb to eliminate reference to
+%	"setrgbcolor" if not actually used (appears to confuse some ancient
+%	printers); cf. writefil.c
+%
+%	support dummy ps_noXXXX for most ps_XXXX's (cf. writefil.c)
+%
+%	use "bind" wherever possible to force replacement of operator names
+%	by operators
+%
+%	surround optional PostScript boilerplate by #BEGIN..#END blocks (cf.
+%	pcalinit.c, writefil.c) to minimize size of PostScript output file
+%
+%	pre-scale all fonts to be used in printing any given calendar (cf.
+%	writefil.c)
+%
+%	moved date width calculation from holidaytext{} to drawnums{} (to
+%	minimize superfluous font loading and scaling)
+%
+%	moved date color calculation from drawnums{} to print_colors() in
+%	writefil.c; split drawnums{} into separate loops for small calendars
+%	(all black) and medium/large calendars (mixed colors)
+%
+%	add support for RGB values in addition to gray levels in dates
+%	and fill boxes (cf. writefil.c); split prtday{} into B&W and
+%	color versions accordingly
+%
+%	document all PostScript function definitions
+%
+%	parameterize additional font and margin sizes
+%
+%	move definition of colors and sizes to writefil.c (q.v.)
+%
+%	draw outermost grid box using 'closepath' (correct line merging at
+%	corners); increase grid width when printing small/medium calendars
+%
+%	check for duplex mode support and disable it if present
+%
+%	select right margin in holidaytext more carefully (avoid overflow
+%	into next box)
+%
+%	use 'weekdayfont' for drawing weekday names
+%
+% 4.4	modified by Andrew Rogers:
+%
+%	support greater flexibility in specification of date colors
+%
+%	support "-[dt]<font>/<size>" options (single-month calendars only);
+%	rewrite code for positioning dates, text, etc. in terms of date
+%	font size and move font size initialization to Pcal proper
+%
+%	move fonts for note box heading, weekday names, foot strings to Pcal
+%
+% 4.3	modified by Andrew Rogers:
+%
+%	removed definitions of dategray and fillgray; handled instead by
+%	Pcal itself (may be selected by user via -s flag)
+%
+%	enlarge dates in small and medium calendars; enlarge title and
+%	weekday names in medium calendars
+%
+% 4.2	modified by Andrew Rogers:
+%
+%	support -[kK] options to reposition small calendars
+%
+%	use same font size for "Notes" as for weekday names; delete heading
+%	from notes box if null
+%
+%	move definition of notesfontsize to Pcal proper; tweak some of the
+%	routines to take variable font size into account
+%
+%	add support for printing notes in any blank box on calendar and
+%	suppressing small calendars
+%
+% 4.1	modified by Andrew Rogers:
+%
+%	support -G option (cf. prtday) to print "gray" dates as filled
+%	outlines
+%
+% 4.0	modified by Andrew Rogers:
+%
+%	support -w ("whole year") option - cf. printmonth_[pl], startpage
+%	moved all the calendar calculations to pcal.c and moonphas.c (q.v.)
+%
+%	support -B option (leave unused boxes blank)
+%
+%	support -O option (print "gray" numbers as outlines)
+%
+%	revised several of the basic routines and added some others; dates,
+%	moons, text, Julian days are now relative to upper-left corner of box
+%
+%	enlarged title and dates in small calendars
+%
+
+
+/Y0 0 def				% Y-coordinate of calendar grid origin
+
+/gridwidth daywidth 7 mul def
+/gridheight dayheight 6 mul def
+/negdaywidth daywidth neg def
+/negdayheight dayheight neg def
+/neggridwidth gridwidth neg def
+/neggridheight gridheight neg def
+
+/textmargin 2 def			% left/right margin for text
+/notemargin 4 def			% left/right margin for notes
+/charlinewidth 0.1 def			% width of outline characters
+
+/datewidth 2 array def			% for aligning holiday text
+
+/moonlinewidth 0.1 def			% width of moon icon line
+/radius 6 def				% radius of moon icon
+/halfperiod 0.5 def			% scale factors, etc. used by "domoon"
+/quartperiod 0.25 def
+/offset radius datemargin 0 get add def
+/rect radius 2 sqrt mul quartperiod div def
+
+/ROMAN 0 def				% font types for text in boxes
+/BOLD 1 def
+/ITALIC 2 def
+/currfonttype ROMAN def
+/boldoffset 0.5 def			% offset for overstriking bold text
+
+% simulate Italic text by slanting Roman text - note that this is properly
+% called "Oblique"
+
+/italicangle 12 def			% angle for slanting Italic text
+/italicmatrix				% Italic font matrix
+ [notesfontsize 0 notesfontsize italicangle dup sin exch cos div mul
+ notesfontsize 0 0] def
+
+/hangingindent (   ) def		% for indenting continued text lines
+
+% disable duplex mode (if supported)
+statusdict (duplexmode) known { statusdict begin false setduplexmode end } if
+
+%
+% Utility functions:
+%
+
+% <fontposition> FontSet => --
+%
+% set current font to element <fontposition> of "allfonts" array
+%
+/FontSet {
+	allfonts exch
+	userdict /CurrentFontSet 2 index put
+	get setfont
+} bind def
+
+% <size> *FontSet => --
+%
+% fetch pre-scaled font (of desired calendar size) from "allfonts" array
+%
+/TitleFontSet {TF add FontSet} bind def
+
+/DateFontSet {DF add FontSet} bind def
+
+% -- *FontSet => --
+%
+% fetch pre-scaled font (of constant size) from "allfonts" array
+%
+/WeekdayFontSet {WF FontSet} bind def
+
+/FootFontSet {FF FontSet} bind def
+
+/NotesFontSet {NF FontSet /currfonttype ROMAN def} bind def
+
+/HeadingFontSet {HF FontSet} bind def
+
+% <string> <width> center => --
+%
+% display <string> centered horizontally in <width>
+%
+/center {
+	1 index stringwidth pop sub 2 div 0 rmoveto show
+} bind def
+
+
+% <str1> <str2> strcat => <string>
+%
+% concatenate <str1> and <str2>; push result onto stack
+%
+/strcat {
+	2 copy
+	length exch length
+	dup 3 -1 roll add
+	string
+	dup 0 6 -1 roll putinterval
+	dup 3 -1 roll 4 -1 roll putinterval
+} bind def
+
+
+% prtday => --
+%
+% pcal will generate the appropriate flavor (B&W or color) of prtday{}
+% depending on the shading values (gray scale or RGB triple) specified by
+% the "-s" flag
+%
+
+#BEGIN	ps_prtday_bw
+
+% print "day" in "color" (black, gray, outline, or outline-gray; cf. pcaldefs.h)
+% using single value in "dategray" as gray shade
+%
+/prtday {					% black and white version
+	gsave
+	day 3 string cvs			% convert day to string
+	[
+		{ show }				% black (0)
+		{ dategray setgray show }		% gray (1)
+		{ true charpath stroke }		% outline (2)
+		{ true charpath gsave			% outline-gray (3)
+		  dategray setgray fill
+		  grestore stroke }
+	] color get exec			% execute operators for color
+	grestore
+} bind def
+
+#END
+
+#BEGIN	ps_prtday_rgb_orig
+
+% print "day" in "color" (black, gray, outline, or outline-gray; cf. pcaldefs.h)
+% using three values in "dategray" as red/green/blue levels; "gray" will
+% print as solid color, "outline" as color outline; "outline-gray" as black
+% outline filled with color
+%
+/prtday {					% color version
+	gsave
+	day 3 string cvs			% convert day to string
+	[
+		{ show }				% black (0)
+		{ dategray aload pop setrgbcolor show }	% gray (1)
+		{ dategray aload pop setrgbcolor	% outline (2; color)
+		  true charpath stroke }
+		{ true charpath gsave			% outline-gray (3)
+		  dategray aload pop setrgbcolor
+		  fill grestore stroke }
+	] color get exec			% execute operators for color
+	grestore
+} bind def
+
+#END
+
+#BEGIN	ps_prtday_rgb_alt
+
+% print "day" in "color" (black, gray, outline, or outline-gray; cf. pcaldefs.h)
+% using three values in "dategray" as red/green/blue levels; "gray" will
+% print as solid color, "outline" as black outline; "outline-gray" as black
+% outline filled with color
+%
+/prtday {					% color version
+	gsave
+	day 3 string cvs			% convert day to string
+	[
+		{ show }				% black (0)
+		{ dategray aload pop setrgbcolor show }	% gray (1)
+		{ true charpath stroke }		% outline (2; black)
+		{ true charpath gsave			% outline-gray (3)
+		  dategray aload pop setrgbcolor
+		  fill grestore stroke }
+	] color get exec			% execute operators for color
+	grestore
+} bind def
+
+#END
+
+
+% setfill => --
+%
+% pcal will generate the appropriate flavor (B&W or color) of setfill{}
+% depending on the shading values (gray scale or RGB triple) specified by
+% the "-s" flag
+%
+#BEGIN ps_setfill_bw
+
+% set fill box shading using single value in "fillgray"
+%
+/setfill {					% black and white version
+	fillgray setgray
+} def
+
+#END
+
+#BEGIN ps_setfill_rgb
+
+% set fill box color using three values in "fillgray" as red/green/blue levels
+%
+/setfill {					% color version
+	fillgray aload pop setrgbcolor
+} def
+
+#END
+
+
+% -- nextbox => --
+%
+% move to same relative position within following day's box
+%
+/nextbox {
+	day startbox add 7 mod 0 eq			% end of week?
+		{ neggridwidth daywidth add negdayheight rmoveto }  % next row
+		{ daywidth 0 rmoveto }				    % next col
+	ifelse
+} bind def
+
+
+% <box> boxpos => <x> <y>
+%
+% calculate and push coordinates of upper-left corner of <box> (0..41)
+%
+/boxpos {
+	dup 7 mod daywidth mul					% x-coord
+	exch 7 idiv negdayheight mul Y0 add			% y-coord
+} bind def
+
+
+% <day> datepos => <x> <y>
+%
+% calculate and push coordinates of upper-left corner of box for <day>
+%
+/datepos {
+	startbox add 1 sub dup 7 mod daywidth mul		% x-coord
+	exch 7 idiv negdayheight mul Y0 add			% y-coord
+} bind def
+	
+
+%
+% Functions for drawing components of calendar:
+%
+% The point size of a PostScript font includes the descenders on [gjpqy],
+% but the Y-origin for printing text starts above any descenders (at the
+% bottom of the upper-case characters).  The following code - and other
+% code concerned with vertical spacing - assumes that the descenders
+% occupy 1/4 of the overall point size.
+
+
+% -- drawtitle => --
+%
+% print month/year title centered at top of calendar
+%
+/drawtitle {
+	/fontsize titlefontsize calsize get def
+	calsize TitleFontSet
+	/month_name month_names month 1 sub get def
+	/yearstring year 10 string cvs def
+	0 Y0 fontsize 0.25 mul add
+	  calsize small eq { 4 } { weekdayfontsize } ifelse
+	  1.15 mul add moveto
+	month_name (  ) strcat yearstring strcat gridwidth center
+} bind def
+
+
+% -- drawdaynames => --
+%
+% print weekday names centered above respective columns
+%
+/drawdaynames {	
+	WeekdayFontSet
+	0 1 6 {
+		/i exch def
+		i daywidth mul Y0 weekdayfontsize 0.4 mul add moveto
+		day_names i get
+		daywidth center
+	} for
+} bind def
+
+
+% -- drawgrid => --
+%
+% draw the grid (6 rows x 7 columns) for the calendar
+%
+/drawgrid {
+	gridlinewidth calsize get setlinewidth
+
+	1 1 6 {					% inner vertical lines
+		daywidth mul Y0 moveto
+		0 neggridheight rlineto
+		stroke
+	} for
+
+	1 1 5 {					% inner horizontal lines
+		0 exch negdayheight mul Y0 add moveto
+		gridwidth 0 rlineto
+		stroke
+	} for
+
+	newpath					% border (w/mitered corners)
+	0 Y0 moveto
+	gridwidth 0 rlineto
+	0 neggridheight rlineto
+	neggridwidth 0 rlineto
+	closepath
+	stroke
+} bind def
+
+
+% -- drawnums => --
+%
+% print dates in appropriate boxes of calendar
+%
+/drawnums {
+	/fontsize datefontsize calsize get def
+	/margin datemargin calsize get def
+	calsize DateFontSet
+	charlinewidth setlinewidth
+	1 datepos fontsize 0.75 mul margin add sub exch margin add exch moveto
+
+	% calculate date widths for "holidaytext" to use; use "2" for all
+	% single-digit dates and "22" for all double-digit dates
+	calsize large eq {
+		datewidth 0 (2) stringwidth pop margin 2 mul add put
+		datewidth 1 (22) stringwidth pop margin 2 mul add put
+	} if
+
+	calsize small eq {
+		/color 0 def		% small calendar dates (all black)
+		1 1 ndays {
+			/day exch def
+			prtday
+			nextbox
+		} for
+	} {
+		1 1 ndays {		% medium/large calendar dates
+			/day exch def
+			/color date_color day get def
+			prtday
+			nextbox
+		} for
+	} ifelse
+} bind def
+
+
+#BEGIN	ps_julians		% code for printing Julian dates
+
+% -- drawjnums => --
+%
+% print day-of-year (and, optionally, days remaining) for each date
+%
+/drawjnums {
+	NotesFontSet
+	1 datepos dayheight 3 sub sub exch daywidth 3 sub add exch moveto
+
+	1 1 ndays {
+		/day exch def
+		/jday jdstart day add 1 sub def
+		/str jday 3 string cvs def
+		julian-dates true eq {		% print days left in year?
+			/str str ( \050) strcat yearlen jday sub 3 string cvs
+				strcat (\051) strcat def
+		} if
+		gsave
+		str dup stringwidth pop 0 exch sub 0 rmoveto show
+		grestore
+		nextbox
+	} for
+} bind def
+
+#END
+
+#BEGIN	ps_nojulians		% dummy version of above (no julian dates)
+/drawjnums {} bind def
+#END
+
+
+#BEGIN	ps_fill			% code for filling blank boxes
+
+% <first> <last> fillboxes => --
+%
+% fill empty calendar boxes in range <first>..<last> (0..41)
+%
+/fillboxes {
+	/last exch def
+	/first exch def
+
+	first 1 last {		% loop through range of boxes
+		/box exch def
+		/fillit true def
+		calsize large eq {	% skip note and small calendar boxes
+			noteboxes { box eq { /fillit false def } if } forall
+			box prev_small_cal eq box next_small_cal eq or {
+				/fillit false def
+			} if
+		} if
+		fillit {		% move to position and fill the box
+			box boxpos moveto
+			gsave
+			setfill
+			daywidth 0 rlineto
+			0 negdayheight rlineto
+			negdaywidth 0 rlineto
+			closepath fill
+			grestore
+		} if
+	} for
+} bind def
+
+
+% -- drawfill => --
+%
+% fill in unused boxes before and after calendar dates
+%
+/drawfill {
+	0 startbox 1 sub fillboxes		% fill boxes before calendar
+	startbox ndays add 41 fillboxes		% fill boxes after calendar
+} bind def
+
+#END
+
+#BEGIN	ps_nofill		% dummy version of above (no box fill)
+/drawfill {} bind def
+#END
+
+
+#BEGIN	ps_footer		% code for printing foot strings
+
+% -- footstrings => --
+%
+% print foot strings ([LCR]footstring) at bottom of page
+%
+/footstrings {
+	FootFontSet
+%	/yfoot { Y0 neggridheight add footfontsize 1.25 mul sub } bind def
+	/yfoot { neggridheight 15 sub } bind def
+	0 yfoot moveto
+	Lfootstring show
+	gridwidth Rfootstring stringwidth pop sub yfoot moveto
+	Rfootstring show
+	0 yfoot moveto
+	Cfootstring gridwidth center
+} bind def
+
+#END
+
+#BEGIN	ps_nofooter		% dummy version of above (no foot strings)
+/footstrings {} bind def
+#END
+
+
+#BEGIN	ps_text			% code for printing text within boxes
+
+%
+% Functions for printing text inside boxes:
+%
+
+% <day> <text> daytext => --
+%
+% print <text> in <day> box (below date)
+%
+/daytext {
+	/mytext exch def /day exch def
+	NotesFontSet
+	day datepos datefontsize large get 0.75 mul datemargin large get
+	  2 mul add notesfontsize 0.75 mul add sub dup
+	  /ypos exch def exch textmargin add exch moveto
+	currentpoint pop /LM exch def
+	/RM LM daywidth textmargin 2 mul sub add def
+	showtext
+} bind def
+	
+
+% <day> <text> holidaytext => --
+%
+% print <text> in <day> box (to right of date)
+%
+/holidaytext {
+	/mytext exch def /day exch def
+
+	/datesize datefontsize large get def 
+	/margin datemargin large get def
+	/dwidth datewidth day 10 lt { 0 } { 1 } ifelse get def
+
+	% display the text between the date and the moon icon (if any)
+	NotesFontSet
+	day datepos margin notesfontsize 0.75 mul add sub dup
+	/ypos exch def exch dwidth add exch moveto
+	currentpoint pop /LM exch def
+	/mwidth do-moon-p {offset radius add} {0} ifelse def	% moon width
+	/RM LM daywidth textmargin sub dwidth mwidth add sub add def
+	showtext
+} bind def
+
+
+% <box> <text> notetext => --
+%
+% print notes heading (if any) and <text> in <box> (0..41)
+%
+/notetext {
+	/mytext exch def /box exch def
+
+	% skip notes box heading if null
+	notesheading () eq {
+		box boxpos notemargin notesfontsize 0.75 mul add sub dup
+	} {
+		box boxpos notemargin headingfontsize 0.75 mul add sub exch
+		  notemargin add exch moveto
+		HeadingFontSet
+		notesheading show
+		box boxpos notemargin headingfontsize add
+		  notesfontsize add sub dup
+	} ifelse
+	/ypos exch def exch notemargin add exch moveto
+
+	% display the notes text
+	NotesFontSet
+	/LM currentpoint pop def
+	/RM LM daywidth notemargin 2 mul sub add def
+	showtext
+} bind def
+
+
+% -- crlf => --
+%
+% simulate carriage return/line feed sequence
+%
+/crlf {
+	ypos notesfontsize sub /ypos exch def LM ypos moveto
+} bind def
+
+
+% <string> prstr => --
+%
+% print <string> on current line if possible; otherwise print on next line
+%
+/prstr {
+	gsave				% in case rescaling is necessary
+	dup stringwidth pop currentpoint pop add RM gt {	% too wide?
+		% move to the next line (unless this is the initial word)
+		currentpoint pop LM ne {
+			crlf hangingindent show
+		} if
+		% rescale in X dimension as necessary to make word fit
+		dup stringwidth pop RM currentpoint pop sub gt {
+			dup stringwidth pop RM currentpoint pop sub exch div 1
+			scale
+		} if
+	} if
+	currfonttype BOLD eq
+		{ dup currentpoint 2 index show exch 0.5 add exch moveto show }
+		{ show }
+	ifelse
+	currentpoint grestore moveto	% grestore alone would reset position
+} bind def
+
+
+% -- showtext => --
+%
+% print words in "mytext", inserting line breaks where necessary (or requested)
+%
+/showtext {
+	mytext {
+		/word exch def
+		/i 1 def
+		/n 0 def
+
+		% look up current word in list of special formatting strings
+		[ linesep boldfont italicfont romanfont ] {
+			word eq {
+				/n i def
+			} if
+			/i i 1 add def
+		} forall
+	
+		% n will be 0 if current word is an ordinary word, 1..4 if it
+		% is a formatting string; execute corresponding block of code
+		[
+			{ word prstr ( ) show }		% ordinary word
+
+			{ crlf				% line separator (.p)
+			  NotesFontSet }		% reset font type
+
+			{ NotesFontSet			% font => bold (.b)
+			  /currfonttype BOLD def }
+
+			{ /currfonttype ITALIC def	% font => italic (.i)
+			  notesfont findfont italicmatrix makefont setfont }
+
+			{ NotesFontSet }		% font => roman (.r)
+		] n get exec
+	} forall
+} bind def
+
+#END
+
+#BEGIN ps_notext		% dummy version of above (if no text)
+				% (for future use)
+#END
+
+%
+% Functions for printing months of various sizes and orientations:
+%
+
+
+% -- startpage => --
+%
+% initialize new physical page
+%
+/startpage {
+	rval rotate
+	xsval ysval scale
+	xtval ytval translate
+} bind def
+
+
+% -- calendar => --
+%
+% draw calendar for "month"/"year", with various features enabled/disabled
+% according to "calsize"
+%
+/calendar {
+	drawtitle					% month/year
+	calsize small ne { drawdaynames } if		% weekday names
+	calsize large eq { footstrings } if		% footer strings
+	drawnums					% dates
+	calsize large eq				% Julian dates
+	  julian-dates false ne and { drawjnums } if
+	fill-boxes { drawfill } if			% fill boxes
+	drawgrid					% grid
+	calsize large eq				% moon icons
+	  draw-moons false ne and { drawmoons } if   
+	0 0 moveto
+} bind def
+
+
+% -- printmonth => --
+%
+% print calendar at specified position ("posn": 0..11) on landscape or
+% portrait page
+%
+
+#BEGIN	ps_year_l		% code for whole-year calendars (landscape)
+
+/hspace gridwidth daywidth add def	% one date box space between calendars
+/hscale 0.2258 def			% 1 / (4 + 3/7)
+/vspace gridheight ytop add 135 add neg def % vertical spacing
+/vscale .25 def 			% beats me how this was calculated
+
+/printmonth {
+	/calsize medium def
+
+	posn 0 eq {		% assume first month printed on page is posn 0
+		startpage
+		footstrings
+	} if
+
+	gsave			% draw medium calendar at selected position
+	hscale vscale scale	% landscape mode - 3 rows, 4 cols
+	posn 4 mod hspace mul
+	posn 4 idiv vspace mul 45 add
+	translate
+	calendar
+	grestore
+} bind def
+
+#END
+
+
+#BEGIN	ps_year_p		% code for whole-year calendars (portrait)
+
+/hspace gridwidth daywidth add def	% one date box space between calendars
+/hscale 0.3043 def			% 1 / (3 + 2/7)
+/vspace gridheight ytop add 135 add neg def % vertical spacing
+/vscale .194 def			% beats me how this was calculated
+
+/printmonth {	
+	/calsize medium def
+
+	posn 0 eq {		% assume first month printed on page is posn 0
+		gsave		% print foot strings at original scale
+		startpage
+		0 25 translate  % reposition footstrings slightly higher
+		footstrings
+		grestore
+
+		/sv_ysval ysval def	% re-scale Y axis to full page height
+		/ysval xsval pageheight pagewidth div dup mul mul def
+		startpage
+		/ysval sv_ysval def
+	} if
+
+	gsave			% draw medium calendar at selected position
+	hscale vscale scale	% portrait mode - 4 rows, 3 cols
+	posn 3 mod hspace mul
+	posn 3 idiv vspace mul 155 add
+	translate
+	calendar
+	grestore
+} bind def
+
+#END
+
+
+#BEGIN	ps_month		% code for single-month calendars
+
+% -- printmonth => --
+%
+% print full-size calendar for "month"/"year" on single page
+%
+/printmonth {
+	/calsize large def
+	startpage
+	calendar
+	printsmallcals				% small calendars
+	
+} bind def
+
+% scale factor (slightly < 1/7) and offset for printing small calendars
+/scscale .138 def
+/scoffset gridwidth gridwidth scscale 7 mul mul sub 2.0 div def
+
+% -- printsmallcals => --
+%
+% print small calendars in boxes "prev_small_cal" and "next_small_call"
+%
+/printsmallcals {
+	/calsize small def
+	/sv_startbox startbox def
+
+	prev_small_cal 0 ge {			% previous month/year
+		/year p_year def
+		/month p_month def
+		/startbox p_startbox def
+		/ndays p_ndays def
+		gsave
+		prev_small_cal boxpos translate
+		scscale dup scale
+		scoffset ytop neg translate
+		calendar
+		grestore
+	} if
+
+	next_small_cal 0 ge {			% next month/year
+		/year n_year def
+		/month n_month def
+		/startbox n_startbox def
+		/ndays n_ndays def
+		gsave
+		next_small_cal boxpos translate
+		scscale dup scale
+		scoffset ytop neg translate
+		calendar
+		grestore
+	} if
+
+	/startbox sv_startbox def		% required for text boxes
+} bind def
+
+#END
+
+
+#BEGIN	ps_moons		% code for drawing moon icons
+
+%
+% Moon drawing functions:
+%
+
+
+% <phase> domoon => --
+%
+% draw icon showing moon at <phase> (0 = new; .25 = fq; .5 = full; .75 = lq)
+%
+/domoon {
+	/phase exch def
+
+	gsave
+	currentpoint translate
+	newpath
+
+	% if moon is full, just draw unfilled circle
+
+	phase halfperiod .01 sub ge phase halfperiod .01 add le and {
+		0 0 radius
+		0 360 arc stroke
+	}
+	{
+		% draw the line arc now; prepare (but don't draw) the fill arc
+
+		0 0 radius			% for line and fill arcs
+		0 0 radius 
+		phase halfperiod lt {		% phase between new and full
+			270 90 arc stroke	% (line on right, fill on left)
+			0 radius neg moveto
+			270 90 arcn 
+		}
+		{				% phase between full and new
+			90 270 arc stroke	% (line on left, fill on right)
+			0 radius neg moveto
+			270 90 arc 
+			/phase phase halfperiod sub def
+		} ifelse
+
+		% curveto uses (x0,y0) [current point], (x1,y1), (x2,y2),
+		% and (x3,y3) as the control points for drawing a Bezier
+		% cubic section, used here as the curve dividing the moon
+		% icon into dark and light sections.  x1 is in the range
+		% -R*sqrt(2) <= x1 <= R*sqrt(2) and y1 is in the range
+		% 0 <= y1 <= R; note that except in the degenerate case
+		% where x1 = y1 = x2 = y2 = 0, the curve does not actually
+		% pass through (x1,y1) or (x2,y2).
+
+		/x1 quartperiod phase sub rect mul def
+		/y1 x1 abs 2 sqrt div def
+
+		% push control points for curveto
+
+					% x0 = 0   (current
+					% y0 = R    point)
+		x1			% x1
+		y1			% y1
+		x1			% x2 = x1
+		y1 neg			% y2 = -y1
+		0			% x3 = 0
+		radius neg		% y3 = -R
+
+		% draw Bezier curve; fill area between curve and fill arc
+
+		curveto
+		fill
+	} ifelse
+
+	grestore
+} bind def
+
+
+% -- do-moon-p => <bool>
+%
+% determine whether or not moon icon is to be drawn on "day"; push result
+%
+/do-moon-p {
+	draw-moons (some) eq {		% printing quarter moons?  look up day
+		/p false def
+		quarter_moons { day eq { /p true def } if } forall
+		p
+	}
+	{
+		draw-moons		% all moons or no moons
+	} ifelse
+} bind def
+
+
+% -- drawmoons => --
+%
+% main routine to draw moon icons on calendar
+%
+/drawmoons {
+	gsave
+	moonlinewidth setlinewidth
+	1 datepos offset sub exch daywidth add offset sub exch moveto
+	/n 0 def			% index into moon_phases
+	1 1 ndays {
+		/day exch def
+		do-moon-p {		% draw a moon today?
+			moon_phases n get domoon
+			/n n 1 add def
+		} if
+		nextbox
+	} for
+	grestore
+} bind def
+
+#END
+
+#BEGIN	ps_nomoons		% dummy version of above (no moons)
+/do-moon-p { false } bind def
+/drawmoons {} bind def
+#END
+
+#BEGIN	ps_roman8
+
+%
+% Roman8 character mappings
+%
+/alt_mappings [                         %% Roman8 character mappings
+8#241 /Agrave           8#242 /Acircumflex      8#243 /Egrave           8#244 /Ecircumflex
+8#245 /Edieresis        8#246 /Icircumflex      8#247 /Idieresis        8#250 /acute
+8#251 /grave            8#252 /circumflex       8#253 /dieresis         8#254 /tilde
+8#255 /Ugrave           8#256 /Ucircumflex      8#257 /sterling         8#260 /macron
+8#261 /Yacute           8#262 /yacute           8#263 /degree           8#264 /Ccedilla
+8#265 /ccedilla         8#266 /Ntilde           8#267 /ntilde           8#270 /exclamdown
+8#271 /questiondown     8#272 /currency         8#273 /sterling         8#274 /yen
+8#275 /section          8#276 /florin           8#277 /cent             8#300 /acircumflex
+8#301 /ecircumflex      8#302 /ocircumflex      8#303 /ucircumflex      8#304 /aacute
+8#305 /eacute           8#306 /oacute           8#307 /uacute           8#310 /agrave
+8#311 /egrave           8#312 /ograve           8#313 /ugrave           8#314 /adieresis
+8#315 /edieresis        8#316 /odieresis        8#317 /udieresis        8#320 /Aring
+8#321 /icircumflex      8#322 /Oslash           8#323 /AE               8#324 /aring
+8#325 /iacute           8#326 /oslash           8#327 /ae               8#330 /Adieresis
+8#331 /igrave           8#332 /Odieresis        8#333 /Udieresis        8#334 /Eacute
+8#335 /idieresis        8#336 /germandbls       8#337 /Ocircumflex      8#340 /Aacute
+8#341 /Atilde           8#342 /atilde           8#343 /Eth              8#344 /eth
+8#345 /Iacute           8#346 /Igrave           8#347 /Oacute           8#350 /Ograve
+8#351 /Otilde           8#352 /otilde           8#353 /Scaron           8#354 /scaron
+8#355 /Uacute           8#356 /Ydieresis        8#357 /ydieresis        8#360 /thorn
+8#361 /Thorn            8#362 /dotaccent        8#363 /mu               8#364 /paragraph
+8#365 /threequarters    8#366 /hyphen           8#367 /onequarter       8#370 /onehalf
+8#371 /ordfeminine      8#372 /ordmasculine     8#373 /guillemotleft    8#374 /bullet
+8#375 /guillemotright   8#376 /plusminus        8#377 /.notdef
+] def
+
+#END
+
+#BEGIN	ps_latin1
+
+%
+% ISO Latin1 character mappings
+%
+/alt_mappings [                         %% ISO Latin1 character mappings
+8#221 /grave            8#222 /acute            8#223 /circumflex       8#224 /tilde
+8#225 /macron           8#226 /breve            8#227 /dotaccent        8#230 /dieresis
+8#231 /.notdef          8#232 /ring             8#233 /cedilla          8#234 /.notdef
+8#235 /hungarumlaut     8#236 /ogonek           8#237 /caron            8#240 /space
+8#241 /exclamdown       8#242 /cent             8#243 /sterling         8#244 /currency
+8#245 /yen              8#246 /brokenbar        8#247 /section          8#250 /dieresis
+8#251 /copyright        8#252 /ordfeminine      8#253 /guillemotleft    8#254 /logicalnot
+8#255 /hyphen           8#256 /registered       8#257 /macron           8#260 /degree
+8#261 /plusminus        8#262 /twosuperior      8#263 /threesuperior    8#264 /acute
+8#265 /mu               8#266 /paragraph        8#267 /periodcentered   8#270 /cedilla
+8#271 /onesuperior      8#272 /ordmasculine     8#273 /guillemotright   8#274 /onequarter
+8#275 /onehalf          8#276 /threequarters    8#277 /questiondown     8#300 /Agrave
+8#301 /Aacute           8#302 /Acircumflex      8#303 /Atilde           8#304 /Adieresis
+8#305 /Aring            8#306 /AE               8#307 /Ccedilla         8#310 /Egrave
+8#311 /Eacute           8#312 /Ecircumflex      8#313 /Edieresis        8#314 /Igrave
+8#315 /Iacute           8#316 /Icircumflex      8#317 /Idieresis        8#320 /Eth
+8#321 /Ntilde           8#322 /Ograve           8#323 /Oacute           8#324 /Ocircumflex
+8#325 /Otilde           8#326 /Odieresis        8#327 /multiply         8#330 /Oslash
+8#331 /Ugrave           8#332 /Uacute           8#333 /Ucircumflex      8#334 /Udieresis
+8#335 /Yacute           8#336 /Thorn            8#337 /germandbls       8#340 /agrave
+8#341 /aacute           8#342 /acircumflex      8#343 /atilde           8#344 /adieresis
+8#345 /aring            8#346 /ae               8#347 /ccedilla         8#350 /egrave
+8#351 /eacute           8#352 /ecircumflex      8#353 /edieresis        8#354 /igrave
+8#355 /iacute           8#356 /icircumflex      8#357 /idieresis        8#360 /eth
+8#361 /ntilde           8#362 /ograve           8#363 /oacute           8#364 /ocircumflex
+8#365 /otilde           8#366 /odieresis        8#367 /divide           8#370 /oslash
+8#371 /ugrave           8#372 /uacute           8#373 /ucircumflex      8#374 /udieresis
+8#375 /yacute           8#376 /thorn            8#377 /ydieresis
+] def
+
+#END
+
+
+#BEGIN	ps_esperanto
+
+%
+% Esperanto character mappings (circumflex and breve are overstruck - see
+% redefined 'show' operator below)
+%
+
+/alt_mappings [                         % Esperanto (from ISO 8859-3)
+8#346 /c	8#306 /C	8#370 /g	8#330 /G
+8#266 /h	8#246 /H	8#274 /j	8#254 /J
+8#376 /s	8#336 /S	8#375 /u	8#335 /U
+8#223 /circumflex		8#226 /breve
+] bind def
+
+%
+% <string> show => --
+%
+% redefined version of the 'show' operator; displays appropriate accents
+% over remapped Esperanto characters
+%
+/show {
+	{	% loop over characters in string
+		/c exch ( ) dup 0 3 index put exch pop def
+
+		% identify upper- and lower-case accented characters
+		/upper (\306\330\246\254\336\335) c search
+			{ pop pop pop true } { pop false } ifelse def
+		/lower (\346\370\266\274\376\375) c search
+			{ pop pop pop true } { pop false } ifelse def
+
+		upper lower or {		% accented character?
+			% print the accent first (centered over character;
+			% raised slightly over lowercase letters, more over
+			% uppercase); use breve (if available) over [uU],
+			% circumflex over the others
+			gsave
+			0 upper { 0.67 } { 0.1 } ifelse ( ) stringwidth pop mul
+			    rmoveto
+			c (\375) eq c (\335) eq or {
+				currentfont /CharStrings get /breve known
+				{ (\226) } { (\223) } ifelse
+			} {
+				(\223)
+			} ifelse
+			% center the accent (can't use center{} here due to
+			% interaction with redefined show{} - trust me)
+			dup stringwidth pop c stringwidth pop
+			    exch sub 2 div 0 rmoveto show
+			grestore
+		} if
+		c show				% print the base character
+	} forall
+} bind def
+#END
+
+
+#BEGIN	ps_remap		% create new font incorporating 8-bit character mappings
+
+/alt_dict 20 dict def			% Local storage
+
+% <oldfont> <newfont> remap_font => --
+%
+% create remapped font using one of the above 8-bit character remapping tables
+%
+/remap_font {
+	alt_dict begin
+		/newName exch def
+		/oldName exch def
+		/oldDict oldName findfont def
+		/newDict oldDict maxlength dict def
+		oldDict {
+			exch dup /FID ne {
+				dup /Encoding eq {
+					exch dup length array copy
+					newDict 3 1 roll put
+				} {
+					exch newDict 3 1 roll put
+				} ifelse
+			} {
+				pop pop
+			} ifelse
+		} forall
+		newDict /FontName newName put
+		0 2 alt_mappings length 1 sub {
+			dup
+			alt_mappings exch get
+			exch 1 add alt_mappings exch get
+			newDict /Encoding get 3 1 roll put
+		} for
+		newName newDict definefont pop
+	end
+} bind def
+
+#END

@@ -1,0 +1,63 @@
+"Pcal" Version 4.1
+
+This is an intermediate release of "Pcal", the PostScript calendar making
+program.
+
+Major changes:
+
+    1) Of interest to Pcal hackers and installers:
+
+    .	The Un*x flavor of Pcal is now considerably smarter about finding
+	the date file, using the PATH environment variable to identify
+	the directory where the executable lives.  (This is so system-
+	dependent that it exists only for Un*x; in fact, it may require
+	some tweaking for your particular system.  See the comments in
+	pcalutil.c regarding X_OK.)
+
+
+    2) New command-line options:
+
+    .	The "-v" option has been added to print version information without
+	the entire usage message.
+
+    .	The "-G" option has been added to print "gray" dates as filled
+	outlines (thanks to Richard Dyson for the idea).
+
+
+    3) New date file functionality:
+
+    .	Pcal now supports format specifiers (derived mostly from strftime())
+	which allow the user to substitute the current month, day, weekday,
+	year, etc. into a text or foot string.  For further information,
+	refer to the manual page and/or the comments in "pcal.c".
+
+
+    4) Other new functionality:
+
+    .	The default moon phase algorithm has been replaced with an
+	astronomer-quality version; moon file ".moonXX" will continue
+	to be supported for now.
+
+    5) Portability:
+
+    .   Some VMS-specific files have been updated.  Also, a TeX style sheet
+	is now included in the distribution [this has since been dropped
+	since whoever wrote it was no longer around to keep it in sync
+	with the man page - any volunteers?].
+
+
+Credit where credit is due:
+
+The following people contributed to Pcal v4.1:
+
+	Overall coordinator, troff manual page:		Joe Brownlee
+	VMS/TeX support, moon phase algorithm:		Richard Dyson
+	Other C and PostScript code:			Andrew Rogers
+ 
+Although they probably wouldn't recognize the current version, countless
+others worked on Pcal long before any of us ever heard of it; see the
+Orig.ReadMe file and topline comments in pcal.c.
+
+
+Andrew W. Rogers
+20 August 1991

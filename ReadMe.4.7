@@ -1,0 +1,196 @@
+"Pcal" Version 4.7
+
+This is a new release of "Pcal", the PostScript calendar program.  The major
+new features are the "-H" flag for generating output in HTML table form,
+expansion of "%y" in the "include" filename into the last two digits of
+every applicable year in "year all" mode, and the addition of build-time
+support for A4 size paper.
+
+Major changes:
+
+    1) Of interest to Pcal hackers and installers:
+
+      .	Automatically looking for the calendar file in the directory where
+	the Pcal executable lives (Un*x only) is not a Good Thing when there
+	is already another executable named 'calendar' in the same directory.
+	This feature is now optional and may be disabled by #define'ing
+	SEARCH_PCAL_DIR as 0 in pcaldefs.h (or in the Makefile).
+
+      .	The obsolete PRT() and FPR() macros have been scrapped and replaced
+	with simple calls to printf() and fprintf().
+
+      .	The installer can specify different default output file names for
+	PostScript and HTML output (cf. pcaldefs.h) on those systems (VMS,
+	Amiga) where output is automatically directed to a file.
+
+      .	In case anyone still uses moon files, moon96 and moon97 have been
+	deleted and moon98 added.  There are no plans to support moon99.
+
+      .	Support for OS/2 (new Makefile.os2, revised pcallang.h) has been
+	added.
+
+      .	Cleaned up most gcc warnings in "-Wall" mode.  This effort revealed
+	one long-unnoticed bug (see below).
+
+      .	Realigned the page so that the top of the calendar boxes is now the
+	Y origin (instead of 35); the origin had not previously corresponded
+	to any physical feature on the page.  Note that this changes the
+	default value for the little-used -Y flag from -120 to -85.
+
+      . Revised Makefile for use in cross-build environment: PCALINIT_CC
+	defines the host compiler for building pcalinit; CC defines the
+	cross-compiler for building pcal itself.  For native builds (i.e.,
+	host == target), these are the same.
+
+      .	Dropped the "EPSF" designator in the initial PostScript comment
+	since the output is not truly EPS.  The special "%%" comments used
+	by some previewers (e.g., ghostview) are still generated when
+	built with -DEPS.
+
+      .	Added support for A4 size paper at build time; see below.
+
+
+    2) New command-line options:
+
+      .	Pcal now supports the -H flag to generate calendars in HTML table
+	format.  Most of the other flags are overridden or ignored in HTML
+	mode (moons, note text, Julian dates, small calendars, date
+	color/style, scaling/transformation, font selection, left/right
+	footstrings), but one is overloaded in an appropriate manner: the
+	string specified by the -C flag (PostScript center footstring) is
+	used as the page title and as a centered page heading.
+
+	Other HTML formatting details - minimum lines per box, color and
+	format of holidays, etc. - can be configured at build time (see the
+	various Makefiles and pcaldefs.h), but not on the command line.
+	The latter is theoretically possible, but would require either a)
+	using up the remaining single-letter flags (all six of them), b)
+	supporting multiple-letter flags (as per many of the GNU utilities),
+	or c) overloading even more of the existing flags - none of which is
+	particularly appealing.
+
+	As of the 6/19/98 release, the "-w" flag in conjunction with "-H"
+	generates HTML whole-year calendars in a multicolumn format similar
+	to the PostScript equivalents.  "-l" and "-p" may be used to specify
+	landscape or portrait mode, respectively.  Pcal normally prints only
+	five weeks per row unless at least one month in the row requires six;
+	to print six weeks all the time, build with -DCONSISTENT_SPACING .
+
+      . Pcal now supports a numeric (0-6) argument for the -F (first day of
+	week) flag, thus allowing this to be specified independently of
+	selected language.
+
+
+    3) New date file functionality:
+
+      .	Pcal attempts to be somewhat smart about converting simple HTML
+	tags (`<b>', '<i>', etc. to PostScript bold/italic fonts, and
+	`&nbsp;' etc. to ASCII) when generating non-HTML output from a
+	date file containing these tags.
+
+      .	In "year all" mode, the "include xxx%y" directive expands to include
+	a file corresponding to every applicable year (e.g., if the calendar
+	spans 1997, 1998, and 1999, "include xxx%y" will include xxx97, xxx98,
+	and xxx99 in that order) instead of just the initial year.
+
+
+    4) Other new functionality:
+
+      .	Pcal predefines the symbol `v4_7'; this allows the user to ifdef out
+	v4.7-specific constructs from date files that might also be used
+	by older versions of Pcal.  If "-H" is specified, Pcal also
+	predefines the symbol `html'; this allows the user to ifdef out
+	HTML code (e.g. links, font size/color changes, etc.) that is
+	undesirable in PostScript output. 
+
+      .	On systems where output is normally written to a file, the -o flag
+	without an argument redirects it to stdout.
+
+      .	Pcal may optionally be built to generate output for A4 size (545x842)
+	paper by adding -DA4PAPER to the COPTS line in the Makefile and
+	rebuilding.  There is a block of code in writefil.c that forces the
+	printer to select the appropriate paper tray in environments where
+	multiple trays are available; it is, however, known to confuse some
+	previewers and may be #ifdef'd out if desired (look for "#if 1").
+
+
+    5) Bug fixes:
+
+      . I have received reports of a Y2K-related problem on some Un*x systems:
+	when no year is specified on the command line, the year is calculated
+	as 100 instead of 2000.  I can't reproduce this problem myself, but
+	incorporated the suggested fix anyway - see pcal.c and pcalutil.c.
+
+      . Revised pcallang.h to parse the F_HELP, F_USAGE, and F_VERSION flags
+	in the preliminary command line pass (P_CMD0) instead of in the first
+	"real" command line pass (P_CMD1), generating the appropriate message
+	and exiting without attempting to parse any numeric arguments.  This
+	fixes an obscure bug where "pcal -v 99999" generates a "year out of
+	range" error instead of the version stamp.
+
+      .	Fixed a long-standing bug where "note/1" text would overwrite the
+	small calendar for the next month if the "-k" flag was specified and
+	the month began on Sunday.  See note_box() in pcalutil.c.
+
+      .	Minor tweakage for compatibility with C++ compilers: ensure that
+	"C" prototypes are visible wherever necessary (cf. protos.h); change
+	"template" (C++ reserved word) to "templt" (cf. moonphas.c).
+
+      .	Fixed a long-standing bug where the final month and year were
+	miscalculated when spanning year boundaries in whole-year mode.
+
+Credits:
+
+The original calendar PostScript was Copyright (c) 1987 by Patrick Wood and
+Pipeline Associates, Inc. with permission to modify and redistribute.
+
+The following people contributed to Pcal v4.7:
+
+	C and HTML code:				Andrew Rogers
+	OS/2 support:					Alexander Mai
+ 
+For a list of all known contributors to date, see the Orig.ReadMe file and
+topline comments in pcal.c.
+
+Future updates of Pcal v4.7 will be available at the following URL:
+
+	http://www.geocities.com/SunsetStrip/Palms/5555/PS/pcal_4_7_tar_Z.txt
+
+
+Andrew W. Rogers (andrew.rogers@east.sun.com)
+09 February 2000
+
+
+PS: Here's something handy - an alphabetical list of the Pcal options (v4.7)
+and their meanings:
+
+
+------------------------------- clip 'n' save -------------------------------
+
+-A  parse American date format		-a  select language for months/days
+-B  don't fill unused boxes		-b  print day in black
+-C  define center foot string		-c  generate "calendar" utility input
+-D  define preprocessor symbol		-d  select alternate day font
+-E  parse European date format		-e  print empty calendar
+-F  define alternate starting day	-f  select alternate date file
+-G  print day as gray-filled outline	-g  print day in gray
+-H  generate calendar as HTML table	-h  generate full help message
+-I  re-initialize program defaults	-i  <unused>
+-J  print Julian day and days left	-j  print Julian day (day of year)
+-K  prev in first box, next in last	-k  prev/next in first two boxes
+-L  define left foot string		-l  landscape mode
+-M  print all moons			-m  print new/half/full moons
+-N  define heading for notes box	-n  select alternate notes font
+-O  print day as empty outline		-o  select alternate output file
+-P  <unused>				-p  portrait mode
+-Q  <unused>				-q  <unused>
+-R  define right foot string		-r  remap fonts for 8-bit characters
+-S  suppress prev/next calendars	-s  define date/fill box shading
+-T  select typeface for date/note text	-t  select alternate title font
+-U  undefine preprocessor symbol	-u  generate parameter usage message
+-V  <unused>				-v  generate version ID
+-W  <unused>				-w  print whole year per page
+-X  X-axis transformation		-x  X-axis scale factor
+-Y  Y-axis transformation		-y  Y-axis scale factor
+-Z  generate debugging information	-z  specify alternate time zone
+-#  print multiple copies of each page

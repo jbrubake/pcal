@@ -1,0 +1,191 @@
+#
+# Makefile for Pcal v4.7 under OS/2
+#
+# v4.7: add HTML-specific command-line definitions (cf. pcaldefs.h)
+#	delete moon96; add moon98
+#	add Makefile.os2 to TARSRC definition
+#	parameterize executable names; define pcalinit-specific compiler
+#	  name (to facilitate cross-builds)
+#
+# v4.6: "make compress" creates compressed tar file; "make uuencode" creates
+#	uuencode-d version thereof
+#
+# v4.5: "make clean" leaves pcal intact but removes other by-products;
+#       "make clobber" blows everything away;
+#	"make fresh" rebuilds from scratch
+#
+
+VERSION  = 4.7
+PCAL	 = pcal.exe
+PCALINIT = pcalinit.exe
+
+# Set the configuration variables below to taste.
+
+PCALINIT_CC = gcc			# native compiler
+CC	    = gcc			# cross-compiler (if target != host)
+
+# Set COMPRESS to your preferred compression utility (compress, gzip, etc.),
+# Z to the file suffix that it generates (.Z, .gz, etc.), and UUC to the file
+# suffix to denote the uuencoded version.
+
+COMPRESS = compress
+Z	 = .Z
+UUC	 = .uuc
+
+# TAR, et. al. are for creating the 'tar' file to be subsequently compressed.
+TAR	= tar
+#TMP     = /tmp
+PCALTMP = pcal.$(VERSION)
+TARFILE = pcal.$(VERSION).$(TAR)
+ZFILE	= $(TARFILE)$(Z)
+UUCFILE = $(TARFILE)$(Z)$(UUC)
+
+TARSRC = Make_Pcal.com Makefile Makefile.Amiga Makefile.DOS Makefile.MMS \
+	 Makefile.os2 \
+	 Orig.ReadMe Pcal.hlp ReadMe ReadMe.4.6 ReadMe.4.5 ReadMe.4.3 \
+	 ReadMe.4.1 SetUp.com VaxCrtl.opt calendar calendar.gk calendar.uk \
+	 cvt7to8.c cvt8to7.c days.h exprpars.c fonttest_e fonttest_l \
+	 fonttest_r months.h moon98 moonphas.c pcal.c pcal.man \
+	 pcaldefs.h pcalglob.h pcalinit.c pcalinit.ps pcallang.h pcalutil.c \
+	 protos.h pscalendar readfile.c writefil.c pcal.html pcalw.html \
+	 pcal.cgi
+
+# PACK is for packing the man page.  Note that setting PACK to ":" will cause
+# no packing to be done; otherwise, choose "compress" or "pack" as your system
+# requires.
+PACK	= :
+# PACK	= compress
+# PACK	= pack
+
+# directories for installing executable and man page(s)
+BINDIR	= /usr/local/bin
+MANDIR	= /usr/man/man1
+CATDIR	= /usr/man/cat1
+
+OBJECTS = pcal.o exprpars.o moonphas.o pcalutil.o readfile.o writefil.o
+
+# Site-specific defaults which may be overridden here (cf. pcallang.h);
+# uncomment the examples below and/or change them to your liking
+
+# include Roman8 or ISO Latin1 8-bit character mappings by defining MAPFONTS
+# as ROMAN8 or LATIN1 respectively
+# D_MAPFONTS   = -DMAPFONTS=ROMAN8
+
+# redefine title, date, and notes font/pointsize (-t, -d, -n)
+# D_TITLEFONT = '-DTITLEFONT="Helvetica-Bold/48"'
+# D_DATEFONT  = '-DDATEFONT="Helvetica-Bold/28"'
+# D_NOTESFONT = '-DNOTESFONT="Helvetica/8"'
+
+# redefine shading (dates/fillboxes)
+# D_SHADING = '-DSHADING="0.6/0.99"'
+
+# specify American (USA_DATES) or European (EUR_DATES) date parsing (-A, -E)
+# D_DATE_STYLE = -DDATE_STYLE=USA_DATES
+
+# specify first (leftmost) weekday on calendar (-F)
+# D_FIRST_DAY  = -DFIRST_DAY=SUN
+
+# specify default time zone for moon phases: "0" = GMT; "5" = Boston (-z)
+# D_TIMEZONE   = '-DTIMEZONE="5 [Boston]"'
+
+# generate EPS-compatible PostScript (-DEPS)
+# D_EPS	       = -DEPS
+
+# specify default language
+# D_LANGUAGE = -DLANG_DEFAULT=LANG_ENGLISH
+
+# customize HTML output
+# D_BGCOLOR = '-DBGCOLOR="ffffff"'
+# D_BACKGROUND = -DBACKGROUND=NULL
+# D_TEXT = -DTEXT=NULL
+# D_LINK = -DLINK=NULL
+# D_ALINK = -DALINK=NULL
+# D_VLINK = -DVLINK=NULL
+# D_HOLIDAY_PRE = '-DHOLIDAY_PRE="<font color=\"ff0000\"><b>"'
+# D_HOLIDAY_POST = '-DHOLIDAY_POST="</b></font>"'
+# D_BLANK_STYLE = '-DDIVIDE_BLANK_SPACE=0'
+# D_SEARCH_PCAL_DIR = '-DSEARCH_PCAL_DIR=1'
+
+COPTS = $(D_MAPFONTS) $(D_TITLEFONT) $(D_DATEFONT) $(D_NOTESFONT) \
+        $(D_SHADING) $(D_DATE_STYLE) $(D_FIRST_DAY) $(D_TIMEZONE) \
+	$(D_EPS) $(D_LANGUAGE) $(D_BGCOLOR) $(D_BACKGROUND) \
+	$(D_TEXT) $(D_LINK) $(D_ALINK) $(D_VLINK) \
+	$(D_HOLIDAY_PRE) $(D_HOLIDAY_POST) $(D_BLANK_STYLE) \
+	$(D_SEARCH_PCAL_DIR)
+
+CFLAGS = -O2 -Wall
+
+$(PCAL):	$(OBJECTS)
+	$(CC) $(LDFLAGS) -o $(PCAL) $(OBJECTS) -lm
+	@ echo "Build of $(PCAL) complete"
+
+exprpars.o:	exprpars.c pcaldefs.h
+	$(CC) $(CFLAGS) $(COPTS) -c exprpars.c
+
+moonphas.o:	moonphas.c pcaldefs.h pcalglob.h protos.h
+	$(CC) $(CFLAGS) $(COPTS) -c moonphas.c
+
+pcal.o:		pcal.c pcaldefs.h pcalglob.h pcallang.h days.h months.h \
+		protos.h
+	$(CC) $(CFLAGS) $(COPTS) -c pcal.c
+
+pcalutil.o:	pcalutil.c pcaldefs.h pcalglob.h pcallang.h days.h months.h \
+		protos.h
+	$(CC) $(CFLAGS) $(COPTS) -c pcalutil.c
+
+readfile.o:	readfile.c pcaldefs.h pcalglob.h pcallang.h days.h months.h \
+		protos.h
+	$(CC) $(CFLAGS) $(COPTS) -c readfile.c
+
+writefil.o:	writefil.c pcaldefs.h pcalglob.h pcallang.h days.h months.h \
+		protos.h pcalinit.h
+	$(CC) $(CFLAGS) $(COPTS) -c writefil.c
+
+$(PCALINIT): pcalinit.c
+	$(PCALINIT_CC) $(CFLAGS) $(LDFLAGS) $(COPTS) -o $(PCALINIT) pcalinit.c
+
+pcalinit.h: $(PCALINIT) pcalinit.ps
+	./$(PCALINIT) pcalinit.ps pcalinit.h header
+
+clean:
+	rm -f $(OBJECTS) $(PCALINIT) pcalinit.h pcal.cat $(TARFILE) \
+		$(ZFILE) $(UUCFILE)
+
+clobber: clean
+	rm -f $(PCAL)
+
+fresh:	clobber $(PCAL)
+
+man:	pcal.man
+	nroff -man pcal.man > pcal.cat
+
+install:	$(PCAL) man
+	cp $(PCAL) $(BINDIR)
+	cp pcal.man $(MANDIR)/pcal.1
+	$(PACK) $(MANDIR)/pcal.1
+	cp pcal.cat $(CATDIR)/pcal.1
+	$(PACK) $(CATDIR)/pcal.1
+
+compress:
+	rm -rf $(TMP)/$(PCALTMP) $(TMP)/$(TARFILE) $(TARFILE) $(ZFILE)
+	mkdir $(TMP)/$(PCALTMP)
+	cp $(TARSRC) $(TMP)/$(PCALTMP)
+	cd $(TMP); $(TAR) cf $(TARFILE) $(PCALTMP)
+	mv $(TMP)/$(TARFILE) .
+	$(COMPRESS) $(TARFILE)
+	rm -rf $(TMP)/$(PCALTMP)
+	@ echo "Created $(ZFILE)"
+
+uuencode: compress
+	@ echo "# Pcal v$(VERSION) - uuencoded/compressed Unix tar file" > $(UUCFILE)
+	@ echo "#" >> $(UUCFILE)
+	@ echo "# Last updated: `date`" >> $(UUCFILE)
+	@ echo "#" >> $(UUCFILE)
+	@ echo "# to extract:" >> $(UUCFILE)
+	@ echo "#" >> $(UUCFILE)
+	@ echo "# uudecode $(UUCFILE)" >> $(UUCFILE)
+	@ echo "# uncompress $(ZFILE)" >> $(UUCFILE)
+	@ echo "# tar xvf $(TARFILE)" >> $(UUCFILE)
+	@ echo "#" >> $(UUCFILE)
+	uuencode $(ZFILE) < $(ZFILE) >> $(UUCFILE)
+	@ echo "Created $(UUCFILE)"
