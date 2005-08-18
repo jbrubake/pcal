@@ -10,33 +10,55 @@
 #    DOS+DJGPP: make OS=DJGPP
 # 
 # 
-# v4.8.0: Enhance comments; reverse sense of 'SEARCH_PCAL_DIR' flag so that
-#         enabling the commented-out line has the desired effect; remove
-#         unused 'make' targets ('compress' and 'uuencode') and now-obsolete
-#         list of files for 'TARSRC'; remove refs to obsolete source
-#         files; remove now-unneeded specification of paper size; provide for
-#         new directory locations for source code, object code, and executable 
-#         code; merge OS/2 'Makefile.os2' file into this file; add support for
-#         DOS+DJGPP building based on a patch from Thiago F.G. Albuquerque;
-#         provide a new flag 'BUILD_ENV_xxx' so that we can distinquish the 
-#         build environment among Unix, OS/2, and DOS+DJGPP at compile time;
-#         fixed up the out-of-date target dependency lists
+# v4.9.0: 
+#    
+#    Add comments for new 'MAPFONTS' options to control PostScript character
+#    encodings to support multiple languages.
+#    
+#    Remove obsolete comment about directory usage.  Fix minor comment typo.
+#    
+#    Remove reference to now-obsolete 'Esperanto' character encoding.
+#    
+#    Enable the '-DSEARCH_PCAL_DIR=0' line by default now, so that the 'pcal'
+#    configuration file (a.k.a. the 'date' file, often named 'calendar') will
+#    _not_ be looked for in the same directory as the 'pcal' executable file.
+#    This prevents erroneous use of a common Unix executable named 'calendar'
+#    as a 'pcal' configuration file.  This change was done to minimize the
+#    deltas applied by the Debian distribution.
+#    
+#    Bypass some processing of the documentation if the directory specified
+#    by 'MANDIR' and/or 'CATDIR' does not exist.  This prevents an error 
+#    during the 'make install' step when building in certain environments 
+#    (e.g. DOS+DJGPP).
+# 
+# v4.8.0: 
+#    
+#    Enhance comments; reverse sense of 'SEARCH_PCAL_DIR' flag so that
+#    enabling the commented-out line has the desired effect; remove unused
+#    'make' targets ('compress' and 'uuencode') and now-obsolete list of files
+#    for 'TARSRC'; remove refs to obsolete source files; remove now-unneeded
+#    specification of paper size; provide for new directory locations for
+#    source code, object code, and executable code; merge OS/2 'Makefile.os2'
+#    file into this file; add support for DOS+DJGPP building based on a patch
+#    from Thiago F.G. Albuquerque; provide a new flag 'BUILD_ENV_xxx' so that
+#    we can distinquish the build environment among Unix, OS/2, and DOS+DJGPP
+#    at compile time; fixed up the out-of-date target dependency lists
 #         
 # v4.7: add HTML-specific command-line definitions (cf. pcaldefs.h)
-#	delete moon96; add moon98
-#	add Makefile.os2 to TARSRC definition
-#	parameterize executable names; define pcalinit-specific compiler
-#	  name (to facilitate cross-builds)
+#       delete moon96; add moon98
+#       add Makefile.os2 to TARSRC definition
+#       parameterize executable names; define pcalinit-specific compiler
+#       name (to facilitate cross-builds)
 #
 # v4.6: "make compress" creates compressed tar file; "make uuencode" creates
-#	uuencode-d version thereof
+#       uuencode-d version thereof
 #
 # v4.5: "make clean" leaves pcal intact but removes other by-products;
 #       "make clobber" blows everything away;
-#	"make fresh" rebuilds from scratch
+#       "make fresh" rebuilds from scratch
 #
 
-VERSION  = 4.8.0
+VERSION  = 4.9.0
 
 # 
 # Depending on whether we're compiling for Unix, OS/2, or DOS/DJGPP, use
@@ -92,11 +114,6 @@ endif
 #    - 'man' pages
 #    - 'cat' pages
 # 
-# Note that in an attempt to better document the actions in this 'make' file,
-# separate directories are allowed for the source, the objects, and the
-# executables, but for now, we're just using the same actual destination
-# directory ('src') for all of them.
-# 
 SRCDIR	= src
 OBJDIR	= obj
 EXECDIR	= exec
@@ -127,15 +144,33 @@ OBJECTS = $(OBJDIR)/pcal.o $(OBJDIR)/exprpars.o $(OBJDIR)/moonphas.o \
 # 
 
 # 
-# Define an 8-bit character mapping by defining 'MAPFONTS' to one of the
-# following:
+# Allow the ability to specify an alternate 8-bit character mapping by
+# defining 'MAPFONTS' to one of the following:
 #    
-#    LATIN1 (for ISO Latin-1)
-#    ROMAN8 (for Roman8)
-#    ESPERANTO (for Esperanto)
-#    KOI8U (for KOI8-U [Ukrainian variant of Cyrillic])
+#    ENC_LATIN_1   (ISO 8859-1)
+#    ENC_LATIN_2   (ISO 8859-2)
+#    ENC_LATIN_3   (ISO 8859-3)
+#    ENC_LATIN_4   (ISO 8859-4)
+#    ENC_CYRILLIC  (ISO 8859-5)
+#    ENC_ARABIC    (ISO 8859-6) (*** unsupported ***)
+#    ENC_GREEK     (ISO 8859-7)
+#    ENC_HEBREW    (ISO 8859-8)  (*** unsupported ***)
+#    ENC_LATIN_5   (ISO 8859-9)
+#    ENC_LATIN_6   (ISO 8859-10)
+#    ENC_THAI      (ISO 8859-11)
+#    ENC_LATIN_7   (ISO 8859-13)
+#    ENC_LATIN_8   (ISO 8859-14)
+#    ENC_LATIN_9   (ISO 8859-15)
+#    ENC_LATIN_10  (ISO 8859-16)  (*** unsupported ***)
+#    ENC_KOI8_R    (Russian)
+#    ENC_KOI8_U    (Ukrainian)
+#    ENC_ROMAN8    (Roman8)
 #    
-# D_MAPFONTS   = -DMAPFONTS=ROMAN8
+# Note that this is not normally needed, since 'pcal' will automatically
+# assign the proper character encoding (if any) depending on the language
+# selected.
+# 
+# D_MAPFONTS = -DMAPFONTS=ENC_KOI8_R
 
 # redefine title, date, and notes font/pointsize (-t, -d, -n)
 # D_TITLEFONT = '-DTITLEFONT="Helvetica-Bold/48"'
@@ -184,7 +219,7 @@ D_EPS = -DEPS
 # 'pcaldefs.h' source code file enables this search by default, unless it has
 # been overridden here.
 # 
-# D_SEARCH_PCAL_DIR = '-DSEARCH_PCAL_DIR=0'
+D_SEARCH_PCAL_DIR = '-DSEARCH_PCAL_DIR=0'
 
 # ------------------------------------------------------------------
 
@@ -251,7 +286,7 @@ $(OBJDIR)/readfile.o:	$(SRCDIR)/readfile.c $(SRCDIR)/pcaldefs.h \
 # Note: Unlike the other C-source-based object file targets above, this target
 # for 'writefil.o' adds the '-I$(OBJDIR)' so that the 'pcalinit.h' file (which
 # is generated automatically at compile time from the 'pcalinit.ps' source,
-# using the 'pcalinit' execuatable) will be properly found when 'writefil.c'
+# using the 'pcalinit' executable) will be properly found when 'writefil.c'
 # code does '#include pcalinit.h'.
 # 
 $(OBJDIR)/writefil.o:	$(SRCDIR)/writefil.c $(SRCDIR)/pcaldefs.h \
@@ -302,7 +337,11 @@ man:	$(DOCDIR)/pcal.man
 
 install:	$(EXECDIR)/$(PCAL) man
 	cp $(EXECDIR)/$(PCAL) $(BINDIR)
-	cp $(DOCDIR)/pcal.man $(MANDIR)/pcal.1
-	$(PACK) $(MANDIR)/pcal.1
-	cp $(DOCDIR)/pcal.cat $(CATDIR)/pcal.1
-	$(PACK) $(CATDIR)/pcal.1
+	if [ -d $(MANDIR) ]; then \
+		cp $(DOCDIR)/pcal.man $(MANDIR)/pcal.1
+		$(PACK) $(MANDIR)/pcal.1
+	fi
+	if [ -d $(CATDIR) ]; then \
+		cp $(DOCDIR)/pcal.cat $(CATDIR)/pcal.1; \
+		$(PACK) $(CATDIR)/pcal.1;               \
+	fi

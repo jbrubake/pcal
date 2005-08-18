@@ -18,9 +18,8 @@
 # ---------
 # Preamble 
 # ---------
+opt -a el			# output language = Greek
 opt -E				# European format
-opt -r Latin1 			# must have this mapping
-opt -a gr			# greek months + days (not necessarily!)
 
 # You must have a greek elot PS font to preview or print this !!!
 # I might be able to send you one ...

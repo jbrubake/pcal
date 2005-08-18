@@ -9,6 +9,21 @@
 #    
 # Revision History:
 #
+# 4.9.0
+#     
+#    2005-08-10 -- changes by Bill Marr (marr99@users.sourceforge.net):
+#       
+#       Account for the new version number in areas that check it.
+#       
+#       Add 3 new languages.
+#       
+#       Add useful examples for the 'nearest' keyword and for display of a
+#       week number, both based on ideas taken from sample calendars provided
+#       by users.
+#       
+#       Add an example for the new 'delete' keyword, to demonstrate the
+#       deletion of specific events.
+#       
 # 4.8.0
 #     
 #    2004-12-05 -- changes by Bill Marr (marr99@users.sourceforge.net):
@@ -128,16 +143,16 @@ May 10 Eric's %-1991Y%oY Birthday
 # 
 # Demonstrate the ability to distinguish between different versions of 'pcal'.
 # 
-# Version 4.8.0 adds the ability to display embedded EPS images on monthly
+# Version 4.8.0 added the ability to display embedded EPS images on monthly
 # calendars, so we'll display a photo of the "birthday boy" if we're running
-# 4.8.0.
+# 4.8.0 or higher.
 # 
 # We scale the image by 0.50 in the X and Y dimensions, and we use a X and Y
 # offsets of 0 and -8 typographic points, respectively.  The non-zero Y offset
 # moves the EPS image down slightly to leave room for the "Eric's 14th
 # Birthday" text which will appear below the day's numerics.
 # 
-ifdef v4_8_0
+ifdef v4_8_0 | v4_9_0 
 May 10 image:/path-to-eps/eric.eps 0.50 0.50 0 -8
 endif
 
@@ -209,6 +224,12 @@ elif lang_lv
    opt -C "Latvian"
 elif lang_lt
    opt -C "Lithuanian"
+elif lang_cs
+   opt -C "Czech"
+elif lang_hu
+   opt -C "Hungarian"
+elif lang_ca
+   opt -C "Catalan"
 endif
 endif
 
@@ -276,6 +297,11 @@ last day in Dec*		image:/path-to-eps/party.eps 0.32 0.32 35 0
 endif
 
 # 
+# Demonstrate a more complex holiday, using the 'nearest' keyword...
+# 
+weekday nearest Jul 4*		# nonworkday in observance of U.S. Independence Day
+
+# 
 # Print a warning on 'Friday the 13th' dates.  
 # 
 # Note that this is a good example of a predefined event which we do not mark
@@ -283,6 +309,11 @@ endif
 # differently.
 # 
 F13 Avoid black cats!
+
+# 
+# Display the week number on every Monday...
+# 
+all monday in all	Week %w
 
 # 
 # Demonstrate a recurring monthly event.
@@ -300,6 +331,18 @@ second Sat in all		image:/path-to-eps/recycle.eps 0.039 0.039 34 -9
 # name into the event text...
 # 
 every Wed in all		%A poker game
+
+# 
+# Version 4.9.0 added the ability to delete specific events, thereby allowing
+# you to exclude one or more events that were inserted as a group of events.
+# 
+# This example provides a weekly event on Thursdays that is excluded on every
+# 2nd Thursday of any given month.
+# 
+all Thursday in all		%A golf game
+ifdef v4_9_0
+delete second Thursday in all	%A golf game
+endif
 
 # 
 # Demonstrate the use of an input language other than the default (English)...

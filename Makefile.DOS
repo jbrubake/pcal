@@ -1,5 +1,9 @@
 # Makefile for Pcal under MS-DOS
 #
+# v4.9.0: Bill Marr -- Use 'src/' now that source files are in their own
+#         subdirectory.  Add '-DEPS' switch to get EPS-compliant PostScript
+#         output. 
+# 
 # v4.8.0: Bill Marr -- Change compiler command line to work under 
 #         Borland C++ v5.0
 # 
@@ -10,56 +14,99 @@
 # Uses TurboC or Borland C++ command line compiler.
 
 # 
+# Define various directories for the following items:
+# 
+#    - source code
+#    - object code (and compile-time, auto-generated C header files)
+#    - executable code
+#    - documentation
+#    - installed 'pcal' executable
+#    - 'man' pages
+#    - 'cat' pages
+# 
+# This 'make' file mimics the Unix 'Makefile' file, by defining separate
+# directories for the source, the objects, and the executables.  However,
+# unlike the Unix compilers, the Borland C (DOS) compiler had trouble with
+# creating the objects and executable code in subdirectories, so for now,
+# we're just using the same actual destination directory ('.') for both of
+# them.
+# 
+SRCDIR	= src
+OBJDIR	= .
+EXECDIR	= .
+
+# 
 # This is the old, pre-v4.8.0, TurboC compile command:
 # 
 ### CC	= tcc
 # 
 # This is the new compile command, starting with 'pcal' v4.8.0.  It works with
-# the Borland C++ compiler v5.0.  It adds the '-g0' flag (to prevent halting
-# of the compilation after too many warning messages) and the '-mh' flag (huge
-# memory model).
+# the Borland C++ compiler v5.0.
 # 
-CC	= bcc -g0 -mh
-CFLAGS	= -DDOS
-OBJECTS = pcal.obj exprpars.obj moonphas.obj pcalutil.obj readfile.obj \
-		writefil.obj pcalpapr.obj
+# Borland compiler flags:
+#    
+#    -g0     continue compilation after many warnings (no longer needed)
+#    -mh     use 'huge' memory model
+#    -w-ccc  disable warning 'Condition is always true/false'
+#    -w-pia  disable warning 'Possibly incorrect assignment'
+#    -w-rch  disable warning 'Unreachable code in function xxx'
+#    -w-rvl  disable warning 'Function should return a value in function xxx'
+#    -w-par  disable warning 'Parameter xxx is never used in function xxx'
+#    
+CC	= bcc -mh
 
-pcal.exe:	$(OBJECTS)
+# 
+# Enable certain compile flags:
+#    
+#    -DDOS      declare that we're building for DOS
+#    -DPROTOS   use full function prototypes (prevents many warnings at 
+#               compile time)
+#    -DSTDLIB   prevents 'duplicate definition' errors for standard C functions
+#    -DEPS      generates EPS-compatible PostScript code for proper page 
+#               separation, etc
+#    
+CFLAGS	= -DDOS -DPROTOS -DSTDLIB -DEPS -I$(SRCDIR) \
+		 -w-ccc -w-pia -w-rch -w-rvl -w-par
+OBJECTS = $(OBJDIR)\pcal.obj $(OBJDIR)\exprpars.obj \
+		$(OBJDIR)\moonphas.obj $(OBJDIR)\pcalutil.obj \
+		$(OBJDIR)\readfile.obj $(OBJDIR)\writefil.obj \
+		$(OBJDIR)\pcalpapr.obj
+
+$(OBJDIR)\pcal.exe:	$(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS)
 	@ echo + Build of pcal complete!
 
-exprpars.obj:	exprpars.c pcaldefs.h
-	$(CC) $(CFLAGS) $(COPTS) -c exprpars.c
+$(OBJDIR)\exprpars.obj:	$(SRCDIR)\exprpars.c $(SRCDIR)\pcaldefs.h
+	$(CC) $(CFLAGS) $(COPTS) -c $(SRCDIR)\exprpars.c
 
-moonphas.obj:	moonphas.c pcaldefs.h pcalglob.h
-	$(CC) $(CFLAGS) $(COPTS) -c moonphas.c
+$(OBJDIR)\moonphas.obj:	$(SRCDIR)\moonphas.c $(SRCDIR)\pcaldefs.h $(SRCDIR)\pcalglob.h
+	$(CC) $(CFLAGS) $(COPTS) -c $(SRCDIR)\moonphas.c
 
-pcal.obj:	pcal.c pcaldefs.h pcalglob.h pcallang.h protos.h
-	$(CC) $(CFLAGS) $(COPTS) -c pcal.c
+$(OBJDIR)\pcal.obj:	$(SRCDIR)\pcal.c $(SRCDIR)\pcaldefs.h $(SRCDIR)\pcalglob.h $(SRCDIR)\pcallang.h $(SRCDIR)\protos.h
+	$(CC) $(CFLAGS) $(COPTS) -c $(SRCDIR)\pcal.c
 
-pcalutil.obj:	pcalutil.c pcaldefs.h pcalglob.h pcallang.h protos.h
-	$(CC) $(CFLAGS) $(COPTS) -c pcalutil.c
+$(OBJDIR)\pcalutil.obj:	$(SRCDIR)\pcalutil.c $(SRCDIR)\pcaldefs.h $(SRCDIR)\pcalglob.h $(SRCDIR)\pcallang.h $(SRCDIR)\protos.h
+	$(CC) $(CFLAGS) $(COPTS) -c $(SRCDIR)\pcalutil.c
 
-pcalpapr.obj:	pcalpapr.c pcalpapr.h pcaldefs.h pcalglob.h 
-	$(CC) $(CFLAGS) $(COPTS) -c pcalpapr.c
+$(OBJDIR)\pcalpapr.obj:	$(SRCDIR)\pcalpapr.c $(SRCDIR)\pcalpapr.h $(SRCDIR)\pcaldefs.h $(SRCDIR)\pcalglob.h 
+	$(CC) $(CFLAGS) $(COPTS) -c $(SRCDIR)\pcalpapr.c
 
-readfile.obj:	readfile.c pcaldefs.h pcalglob.h pcallang.h protos.h
-	$(CC) $(CFLAGS) $(COPTS) -c readfile.c
+$(OBJDIR)\readfile.obj:	$(SRCDIR)\readfile.c $(SRCDIR)\pcaldefs.h $(SRCDIR)\pcalglob.h $(SRCDIR)\pcallang.h $(SRCDIR)\protos.h
+	$(CC) $(CFLAGS) $(COPTS) -c $(SRCDIR)\readfile.c
 
-writefil.obj:	writefil.c pcaldefs.h pcalglob.h pcallang.h protos.h pcalinit.h
-	$(CC) $(CFLAGS) $(COPTS) -c writefil.c
+$(OBJDIR)\writefil.obj:	$(SRCDIR)\writefil.c $(SRCDIR)\pcaldefs.h $(SRCDIR)\pcalglob.h $(SRCDIR)\pcallang.h $(SRCDIR)\protos.h $(OBJDIR)\pcalinit.h
+	$(CC) $(CFLAGS) $(COPTS) -I$(OBJDIR) -c $(SRCDIR)\writefil.c
 
-pcalinit.exe: pcalinit.c
-	$(CC) $(CFLAGS) $(LDFLAGS) $(COPTS) pcalinit.c
+$(EXECDIR)\pcalinit.exe: $(SRCDIR)\pcalinit.c
+	$(CC) $(CFLAGS) $(LDFLAGS) $(COPTS) $(SRCDIR)\pcalinit.c
 
-pcalinit.h: pcalinit.exe pcalinit.ps
-	pcalinit pcalinit.ps pcalinit.h header
+$(OBJDIR)\pcalinit.h: $(EXECDIR)\pcalinit.exe $(SRCDIR)\pcalinit.ps
+	$(EXECDIR)\pcalinit $(SRCDIR)\pcalinit.ps $(OBJDIR)\pcalinit.h
 
 clean:
-	del *.obj
-	del pcalinit.h
+	del $(OBJDIR)\*.obj
+	del $(OBJDIR)\pcalinit.h
+	del $(EXECDIR)\pcalinit.exe
 
 clobber: clean
-	del pcalinit.exe
-
-fresh: clobber pcal.exe
+	del $(EXECDIR)\pcal.exe

@@ -7,7 +7,6 @@
 
 # OVERRIDE THE PROGRAM DEFAULTS
 opt -E        # European date format
-opt -r Latin1    # must have this mapping
 opt -F Monday    # starting day should be Monday
 opt -z 2    # time zone should be GMT+2
 opt -a et    # print out Estonian days and months

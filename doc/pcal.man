@@ -10,111 +10,161 @@
 .\"    
 .\" Revision History:
 .\"
+.\" 4.9.0
+.\"     
+.\"    2005-08-10 -- changes by Bill Marr (marr99@users.sourceforge.net): 
+.\"    
+.\"       Remove references to the now-obsolete custom 'Esperanto' character
+.\"       encoding, now that 'Latin3' (ISO 8859-3) is supported.
+.\"       
+.\"       Clarify the use of the options for specification of fonts and font
+.\"       sizes, especially for yearly-format calendars versus monthly-format 
+.\"       calendars.
+.\"       
+.\"    2005-08-01 -- changes by Bill Marr (marr99@users.sourceforge.net): 
+.\"    
+.\"       Document the newly-added 'delete' event keyword/capability.
+.\"       
+.\"       Document the fact that the search for the configuration file in the
+.\"       executable directory is now disabled by default in the 'Makefile'.
+.\"       
+.\"       Describe another newly-added language (ca [Catalan]) in the list of
+.\"       those supported by the '-a' option. 
+.\"       
+.\"       Mention and include a link to the Open Clip Art Library as a good
+.\"       source of images for event decoration.
+.\"       
+.\"       Document the fact that the 'showpage' command need no longer be
+.\"       disabled in EPS files used by 'pcal'.  
+.\"       
+.\"       Fix link to Adobe documentation.
+.\"       
+.\"       Remove the 'experimental' comment for the Lithuanian, Latvian, and
+.\"       Russian languages now that the necessary character encodings are 
+.\"       provided. 
+.\"    
+.\"    2005-01-23 -- changes by Bill Marr (marr99@users.sourceforge.net): 
+.\"     
+.\"       Describe the newly-added languages (cs [Czech] and hu [Hungarian])
+.\"       in the list of those supported by the '-a' option. 
+.\"       
+.\"       Document the support for the 12 new character encodings.
+.\"       
+.\"       Describe the use of the new `pcal.pl' Perl script for HTML/CGI
+.\"       generation of calendars.
+.\"       
+.\"       Describe the new values available for the '-r' (character set
+.\"       remapping) option, including the old 'KOI8-U' value that was
+.\"       accidentally left out of this file for v4.8.0.
+.\"    
 .\" 4.8.0
 .\"     
 .\"    2004-12-04 -- changes by Bill Marr (marr99@users.sourceforge.net): 
-.\"     
-.\"    Provide this commented-out section in the header of this 'pcal.man'
-.\"    file to document the revision history.
-.\"    
-.\"    Provide instructions at the beginning of this file on how to generate
-.\"    the various human-readable forms of this 'man' page.
-.\"    
-.\"    Add a detailed new section ('Encapsulated PostScript (EPS) Images') to
-.\"    document the newly-added ability for embedded EPS images (photos,
-.\"    icons, etc) on monthly PostScript calendars.
-.\"    
-.\"    Add a new section ('Generating PostScript Calendars Via A Web Browser
-.\"    Interface') to document the long-available ability to generate
-.\"    PostScript calendars via a web browser interface using a CGI (Common
-.\"    Gateway Interface) script and a couple of HTML user interface files.
-.\"    
-.\"    In a special section apart from the normal 'pcal' options, document the
-.\"    '-Z' (debug-only) flag, which has been available since version 4.3, but
-.\"    for which the documentation was intentionally left out of the 'man'
-.\"    page.
-.\"    
-.\"    Add the newly-added languages (sv [Swedish], pt [Portuguese], uk
-.\"    [Ukrainian], et [Estonian], ru [Russian], lv [Latvian], and lt 
-.\"    [Lithuanian]), to the list of those supported by the '-a' option.
-.\"    
-.\"    Change the '-a' switch option for the Greek language from 'gr' to
-.\"    'el' to match the ISO 639 (2-letter and 3-letter language codes)
-.\"    standard.
-.\"    
-.\"    Slightly re-order both the list of command-line options and the
-.\"    associated full-length descriptions so that they're in the same order.
-.\"    
-.\"    Use the 'groff'/'man' '.SS' macro (unnumbered secondary section
-.\"    heading) to provide nicer-looking section breaks.
-.\"    
-.\"    Create new 'secondary sections' for existing descriptions of 'Format
-.\"    Specifiers', 'Pre-Processor Functionality', and 'The Moon File'.
-.\"    Previously, these first 2 sections were part of one monolithic section
-.\"    and the third was delineated with a simple bold font rather than being
-.\"    defined in a distinct secondary section.
-.\"    
-.\"    Enhance the description of 'Pre-Processor Functionality' to include the
-.\"    newly added ability to define a symbol value alongside a symbol name
-.\"    with the 'define' directive.
-.\"    
-.\"    Provide additional examples of entries for the 'date file' (i.e. the
-.\"    'pcal' configuration file).
-.\"    
-.\"    Change a couple of the existing examples of entries for the 'date file'
-.\"    to reflect more-current 'year' values, to make it obvious how to
-.\"    specify post-1999 years.
-.\"    
-.\"    Fix 2 small bugs (from the Debian Bug Tracking List for 'pcal') in the
-.\"    use of escape sequences (e.g. '-\H' changed to '\-H') which was causing
-.\"    the associated hyphenated 'pcal' option descriptions to appear
-.\"    incorrectly.
-.\"    
-.\"    Add an HTML link to the free, online Adobe "PostScript Language
-.\"    Reference Manual" book for those wanting to delve into the PostScript
-.\"    world a bit deeper.
-.\"    
-.\"    Update the 'AUTHORS' section with a list of all known recent
-.\"    contributors.
-.\"    
-.\"    Add commented-out lines which consist of several hypostrophes, merely
-.\"    as a visual aid to the section breaks within this document for future
-.\"    editors.  Also, to avoid text colorization problems (in Emacs'
-.\"    'font-lock-mode', usually because of a line starting with a
-.\"    double-quote character), break certain lines at a different spot, which
-.\"    does not affect the 'man' page output at all.
-.\"    
-.\"    Change parameter names associated with '-s' command-line option from
-.\"    'date_shade' and 'fill_shade' to 'day_numerics_color' and
-.\"    'empty_day_box_fill_color' to more accurately reflect their function,
-.\"    especially since the specification of a non-gray-scale (i.e. RGB color)
-.\"    has been possible with this parameter for some time now.
-.\"    
-.\"    Change various references to the color 'gray' to reflect the fact that
-.\"    the colors used are those specified by the '-s' option, with the
-.\"    default for both colors being 'gray'.
-.\"    
-.\"    Document the '-q' flag (print one column per month, for HTML calendars
-.\"    only) which has been available since 'pcal' version 4.7.1.
-.\"    
-.\"    Document the issue of collision of month names and day-of-week names in
-.\"    certain languages (e.g. French and Finnish).
-.\"    
-.\"    To avoid confusion, provide a note about use of no space between an
-.\"    option and its negative value to prevent 'pcal' from misinterpreting
-.\"    the negative option value as an illegal option itself, based on a
-.\"    problem reported by a user on the 'pcal' SourceForge site.
-.\"    
-.\"    Provide various other small cleanups and generally bring the document
-.\"    up-to-date for all the changes which have gone into 'pcal' over the
-.\"    various revisions, including some changes to reflect oversights from
-.\"    previous revisions.
-.\"    
-.\"    Perform general formatting cleanups designed to make the output of this
-.\"    manual page easier to read.
+.\"        
+.\"       Provide this commented-out section in the header of this 'pcal.man'
+.\"       file to document the revision history.
+.\"       
+.\"       Provide instructions at the beginning of this file on how to
+.\"       generate the various human-readable forms of this 'man' page.
+.\"       
+.\"       Add a detailed new section ('Encapsulated PostScript (EPS) Images')
+.\"       to document the newly-added ability for embedded EPS images (photos,
+.\"       icons, etc) on monthly PostScript calendars.
+.\"       
+.\"       Add a new section ('Generating PostScript Calendars Via A Web
+.\"       Browser Interface') to document the long-available ability to
+.\"       generate PostScript calendars via a web browser interface using a
+.\"       CGI (Common Gateway Interface) script and a couple of HTML user
+.\"       interface files.
+.\"       
+.\"       In a special section apart from the normal 'pcal' options, document
+.\"       the '-Z' (debug-only) flag, which has been available since version
+.\"       4.3, but for which the documentation was intentionally left out of
+.\"       the 'man' page.
+.\"       
+.\"       Add the newly-added languages (sv [Swedish], pt [Portuguese], uk
+.\"       [Ukrainian], et [Estonian], ru [Russian], lv [Latvian], and lt
+.\"       [Lithuanian]), to the list of those supported by the '-a' option.
+.\"       
+.\"       Change the '-a' switch option for the Greek language from 'gr' to
+.\"       'el' to match the ISO 639 (2-letter and 3-letter language codes)
+.\"       standard.
+.\"       
+.\"       Slightly re-order both the list of command-line options and the
+.\"       associated full-length descriptions so that they're in the same
+.\"       order.
+.\"       
+.\"       Use the 'groff'/'man' '.SS' macro (unnumbered secondary section
+.\"       heading) to provide nicer-looking section breaks.
+.\"       
+.\"       Create new 'secondary sections' for existing descriptions of 'Format
+.\"       Specifiers', 'Pre-Processor Functionality', and 'The Moon File'.
+.\"       Previously, these first 2 sections were part of one monolithic
+.\"       section and the third was delineated with a simple bold font rather
+.\"       than being defined in a distinct secondary section.
+.\"       
+.\"       Enhance the description of 'Pre-Processor Functionality' to include
+.\"       the newly added ability to define a symbol value alongside a symbol
+.\"       name with the 'define' directive.
+.\"       
+.\"       Provide additional examples of entries for the 'date file' (i.e. the
+.\"       'pcal' configuration file).
+.\"       
+.\"       Change a couple of the existing examples of entries for the 'date
+.\"       file' to reflect more-current 'year' values, to make it obvious how
+.\"       to specify post-1999 years.
+.\"       
+.\"       Fix 2 small bugs (from the Debian Bug Tracking List for 'pcal') in
+.\"       the use of escape sequences (e.g. '-\H' changed to '\-H') which was
+.\"       causing the associated hyphenated 'pcal' option descriptions to
+.\"       appear incorrectly.
+.\"       
+.\"       Add an HTML link to the free, online Adobe "PostScript Language
+.\"       Reference Manual" book for those wanting to delve into the
+.\"       PostScript world a bit deeper.
+.\"       
+.\"       Update the 'AUTHORS' section with a list of all known recent
+.\"       contributors.
+.\"       
+.\"       Add commented-out lines which consist of several hypostrophes,
+.\"       merely as a visual aid to the section breaks within this document
+.\"       for future editors.  Also, to avoid text colorization problems (in
+.\"       Emacs' 'font-lock-mode', usually because of a line starting with a
+.\"       double-quote character), break certain lines at a different spot,
+.\"       which does not affect the 'man' page output at all.
+.\"       
+.\"       Change parameter names associated with '-s' command-line option from
+.\"       'date_shade' and 'fill_shade' to 'day_numerics_color' and
+.\"       'empty_day_box_fill_color' to more accurately reflect their
+.\"       function, especially since the specification of a non-gray-scale
+.\"       (i.e. RGB color) has been possible with this parameter for some time
+.\"       now.
+.\"       
+.\"       Change various references to the color 'gray' to reflect the fact
+.\"       that the colors used are those specified by the '-s' option, with
+.\"       the default for both colors being 'gray'.
+.\"       
+.\"       Document the '-q' flag (print one column per month, for HTML
+.\"       calendars only) which has been available since 'pcal' version 4.7.1.
+.\"       
+.\"       Document the issue of collision of month names and day-of-week names
+.\"       in certain languages (e.g. French and Finnish).
+.\"       
+.\"       To avoid confusion, provide a note about use of no space between an
+.\"       option and its negative value to prevent 'pcal' from misinterpreting
+.\"       the negative option value as an illegal option itself, based on a
+.\"       problem reported by a user on the 'pcal' SourceForge site.
+.\"       
+.\"       Provide various other small cleanups and generally bring the
+.\"       document up-to-date for all the changes which have gone into 'pcal'
+.\"       over the various revisions, including some changes to reflect
+.\"       oversights from previous revisions.
+.\"       
+.\"       Perform general formatting cleanups designed to make the output of
+.\"       this manual page easier to read.
 .\"    
 .\" 
-.TH PCAL 1 "14 Dec 2004" "Version 4.8.0" "USER COMMANDS"
+.TH PCAL 1 "18 Aug 2005" "Version 4.9.0" "USER COMMANDS"
 .SH NAME
 pcal \- generate PostScript (or HTML) calendars
 .SH SYNOPSIS
@@ -244,7 +294,7 @@ nor
 .BR HOME
 is defined,
 .I pcal
-searches the current directory instead.  Finally, unless inhibited (via 
+searches the current directory instead.  Finally, if enabled (via 
 the `SEARCH_PCAL_DIR' flag) when
 .I pcal
 was built, the directory where the
@@ -568,6 +618,31 @@ of that line, unless the `#' character is escaped by `\\'.
 
 .\" ------------------------------------------------------------------
 
+.SS Deleting Events
+
+By prepending the
+.I `delete'
+keyword to an event specification, one or more events may be deleted from a
+set of previously-specified events.
+
+.PP
+For example, the following lines might appear in the date file:
+.PP
+.RS
+.LP
+.nf
+all Friday in all  Poker game
+delete first Friday in all  Poker game
+.fi
+.RE
+.LP
+This results in an event labelled `Poker game' on every Friday except the
+first Friday of the month.  If you delete an entry which is marked as a
+holiday, the `holiday' flag for that day will be recalculated.  Any `delete'
+entries which don't match any pre-existing entries are silently ignored.
+
+.\" ------------------------------------------------------------------
+
 .SS Format Specifiers
 
 .I Pcal
@@ -837,15 +912,22 @@ EPS image.)
 .BR "Note:"
 Unfortunately, most EPS images cannot be used directly by
 .IR pcal .
-In order to make an EPS image usable, you will have to (as an absolute
-minimum) remove or comment out the PostScript `showpage' command near the end
-of the EPS image file.  If you fail to do this, the calendar will be printed
-immediately (or displayed immediately, if previewing on-screen) after
-encountering the EPS image, prior to completion of the processing of the rest
-of the EPS images for that month!
+
+.RS
+.LP
+In the older 4.8.0 release of
+.IR pcal
+(which was the first release to offer EPS image capability), you had to remove
+or comment out the PostScript `showpage' command near the end of the EPS image
+file.  If you failed to do this, the calendar would be printed immediately (or
+displayed immediately, if previewing on-screen) after encountering the EPS
+image, prior to completion of the processing of the rest of the EPS images for
+that month!
+.B Fortunately, this restriction was removed in the 4.9.0 release of
+.IR pcal .
 .PP
 Furthermore, depending on the EPS image used and how it was created, you may
-also have to remove or comment out some or all of the PostScript `translate'
+have to remove or comment out some or all of the PostScript `translate'
 commands, in order to avoid the use of illogical X-delta and Y-delta values
 when specifying the EPS image in your
 .I pcal
@@ -873,7 +955,9 @@ gv (version 3.5.8) -- EPS images appear fine
 .IP \(bu 2
 ggv (versions 2.4.0.1 and 2.6.1) -- EPS images appear fine
 .IP \(bu 2
-kghostview (versions 0.13.2 [KDE 3.1.4] and 0.2.0 [KDE 3.2.3]) -- EPS images DO NOT APPEAR!
+kghostview (versions 0.13.2 [KDE 3.1.4] and 0.2.0 [KDE 3.2.3 and 3.3.2]) -- EPS images DO NOT APPEAR!
+.RE
+.LP
 .RE
 .LP
 .RE
@@ -895,6 +979,16 @@ EPS icons.  It can be found at this site:
 .IR http://wvware.sourceforge.net/libwmf.html
 .RE
 .LP
+
+The 
+.I Open Clip Art Library
+is a good source of freely-usable images for decorating your events:
+.RS
+.LP
+.IR http://www.openclipart.org
+.RE
+.LP
+
 .BR "Note:"
 The EPS image content is not generated in the PostScript output -- only a
 reference to the EPS image filename is generated.  From a practical
@@ -1142,25 +1236,30 @@ which is a different capability entirely.
 .RE
 .LP
 .I Pcal
-comes with 3 files that provide this 
-ability: `pcal.cgi', `pcal.html', and `pcalw.html'.
+comes with 4 files that provide this 
+ability: `pcal.cgi' (a Bourne shell script), `pcal.pl' 
+(a Perl equivalent of `pcal.cgi'), `pcal.html', and `pcalw.html'.
 .PP
-The CGI file must be edited before using it. Change the definition
-for 
-.I `pcal=' 
-to point to the location of the
+The CGI file (either `pcal.cgi' or `pcal.pl') must be edited before using
+it. Change the definition for
+.I `pcal='
+(Bourne shell script) or 
+.I `my $PCAL ='
+(Perl script) to point to the location of the
 .I pcal
 executable file.  
 Change the definition
 for 
-.I `file=' 
-to point to the location of the
+.I `file='
+(Bourne shell script) or 
+.I `my $FILE ='
+(Perl script) to point to the location of the
 .I pcal
 `date file' (e.g. `.calendar'), which contains the options
 for running
 .IR pcal .
-Finally, copy the `pcal.cgi' file to the location where your web
-server expects to find such files (e.g. `/var/www/cgi-bin/').
+Finally, copy the `pcal.cgi' (or `pcal.pl') file to the location where your
+web server expects to find such files (e.g. `/var/www/cgi-bin/').
 .PP
 The `pcal.html' and `pcalw.html' files must also be edited.  Each
 one has a line like this:
@@ -1170,7 +1269,7 @@ one has a line like this:
 .RE
 .LP
 That line must be edited to point to the host and location of your
-CGI file.
+CGI script file (`pcal.cgi' or `pcal.pl').
 .PP
 Once that's done, point your web browser to the `pcal.html' or
 `pcalw.html' file to generate monthly/yearly PostScript calendars
@@ -1207,7 +1306,7 @@ file.  Note that the search rules are different when
 .B \-f
 is used.  If
 .I cal
-is an absolute file name (i.e., starting with a `/'), then
+is an absolute file name (i.e. starting with a `/'), then
 .I pcal
 attempts to open only that file.  Otherwise,
 .I pcal
@@ -1216,7 +1315,7 @@ looks for
 in the current directory, then in the directory indicated by the environment
 variable
 .B PCAL_DIR 
-(if defined), and finally, unless inhibited (via the `SEARCH_PCAL_DIR' flag)
+(if defined), and finally, if enabled (via the `SEARCH_PCAL_DIR' flag)
 when
 .I pcal
 was built, in the directory where the
@@ -1370,28 +1469,57 @@ Specifies the x-axis scaling factor for the calendar size.
 Specifies the y-axis scaling factor for the calendar size.
 .TP
 .BI \-t " \fR[\fItitle_font\fR][\fB/\fIsize\fR]"
-Specifies the name of a font to use to print all the calendar heading text: the
-month name and year at the top of the calendar, the weekday names, the notes
-box heading, and the footer strings.  The user may optionally specify the font size for the
-month/year heading (single-month calendar only); for example,
+Specifies the name of a font to use for all the calendar heading text:
+.RS
+.RS
+.LP
+.IP \(bu 2
+the month name and year at the top of the calendar (for monthly-format
+calendars) or at the top of each month (for yearly-format calendars and for
+the small previous/next-month calendars [if enabled] on monthly-format
+calendars)
+.IP \(bu 2
+the day-of-week names
+.IP \(bu 2
+the footer strings (if any)
+.IP \(bu 2
+the ``Notes'' box heading (if any; for monthly calendars only)
+.RE
+.RE
+.LP
+.IP
+For monthly calendars only, the user may optionally specify the font size,
+which applies only to the main month/year heading.  For example,
 .B "pcal \-t Times-Roman/54"
 sets the font to Times-Roman and the month/year point size to 54.  The font
 size may also be changed independently:
 .B "pcal \-t /54"
 changes the point size to 54 without affecting the font name.
+.IP
+Note: For yearly calendars, any specification of font 
+.I size
+is ignored.
 .TP
 .BI \-d " \fR[\fIdate_font\fR][\fB/\fIsize\fR]"
 Similar to the
 .B \-t
-option, but selects the font and/or size used to print the dates.
+option, but selects the font and/or size used for the day numerics (the
+numbers inside the box for each day).
+.IP
+Note: For yearly calendars, any specification of font 
+.I size
+is ignored.
 .TP
 .BI \-n " \fR[\fItext_font\fR][\fB/\fIsize\fR]"
 Similar to the
 .B \-t
 and
 .B \-d
-options, but selects the font and/or size used to print the text associated
-with each day and in the monthly "Notes" blocks.
+options, but selects the font and/or size used for any `event' text associated
+with each day and for any text in the monthly ``Notes'' box.
+.IP
+Note: This option applies to monthly calendars only. For yearly calendars,
+this option does not apply.
 .TP
 .BI \-L " string"
 Causes the accompanying string to be printed as a left-justified footer.
@@ -1494,8 +1622,8 @@ The HTML table format does not support moon graphics, Julian date information,
 `day numerics' color, `empty day' `box fill' color, left or right footer
 strings (but see the
 .B \-C
-flag), alternate fonts/sizes, transformation and scaling factors, embedded EPS
-images, or Esperanto.
+flag), alternate fonts/sizes, transformation and scaling factors, or embedded
+EPS images.
 .TP
 .BI \-q
 This option is only valid when used in conjunction with the
@@ -1541,12 +1669,16 @@ to write version information only (to
 and terminate.
 .IP
 Pcal predefines the symbol \fBvX_Y_Z\fP, where \fBX_Y_Z\fP denotes the current
-version of Pcal (e.g. version 4.8.0 predefines the symbol \fBv4_8_0\fP).
+version of Pcal (e.g. version 4.9.0 predefines the symbol \fBv4_9_0\fP).
 .TP
 .BI \-a " output_language"
 Select the output language (for the names of months and days on the calendar).
 .IP
 Currently, the following languages are supported:
+.B ca
+(Catalan),
+.B cs
+(Czech),
 .B de
 (German),
 .B el
@@ -1563,16 +1695,18 @@ Currently, the following languages are supported:
 (Finnish),
 .B fr
 (French),
+.B hu
+(Hungarian),
 .B it
 (Italian),
 .B lt
-(Lithuanian [experimental \(em see `ReadMe.txt' file]),
+(Lithuanian),
 .B lv
-(Latvian [experimental \(em see `ReadMe.txt' file]),
+(Latvian),
 .B pt
 (Portuguese),
 .B ru
-(Russian [experimental \(em see `ReadMe.txt' file]),
+(Russian),
 .B sv
 (Swedish),
 and
@@ -1599,23 +1733,70 @@ requires an ELOT-928 font (available from ah@doc.ic.ac.uk).  Also see the
 .BR \-r " and " \-t
 options.
 .IP
-If Esperanto is selected, 
-.I pcal
-converts [cghjsuCGHJSU][xX^] and
-[uU][xX~] to the corresponding accented character; 
-e.g. "jxauxdo", "j^au~do", or any equivalent form will 
-print as "j-circumflex a u-breve d o".
-.IP
 .I Pcal
 predefines the symbol \fBlang_XX\fP, where \fBXX\fP is the two-character
 abbreviation for the selected output language.
 .TP
 .BI \-r " \fR[\fImapping\fR]"
-Specifies an 8-bit character set remapping for printing the diacritical
-marks common to European languages; \fImapping\fR may be "Roman8" (ROMAN-8
-extended character set), "Latin1" (ISO LATIN-1 extended character set), or
-"none" (builtin 8-bit mappings only).  It may be
-abbreviated to a single character if desired.
+Specifies an 8-bit character set remapping (encoding) for printing the
+diacritical marks common to European languages.
+.IP
+Note: This option is not usually needed since
+.I pcal
+will automatically select an appropriate default character encoding (mapping)
+for the language for which the calendar is being generated.
+.IP
+The value specified for \fImapping\fR is case-insensitive and may be
+abbreviated to the point where it is still unique.  The value used may be any
+of the following:
+.RS
+.RS
+.LP
+.IP \(bu 2
+"none" (use built-in character set)
+.IP \(bu 2
+"Latin1" (ISO 8859-1)
+.IP \(bu 2
+"Latin2" (ISO 8859-2)
+.IP \(bu 2
+"Latin3" (ISO 8859-3)
+.IP \(bu 2
+"Latin4" (ISO 8859-4)
+.IP \(bu 2
+"Cyrillic" (ISO 8859-5)
+.\" As of Aug 2005, Arabic is not yet supported...
+.\" .IP \(bu 2
+.\" "Arabic" (ISO 8859-6)
+.IP \(bu 2
+"Greek" (ISO 8859-7)
+.\" As of Aug 2005, Hebrew is not yet supported...
+.\" .IP \(bu 2
+.\" "Hebrew" (ISO 8859-8)
+.IP \(bu 2
+"Latin5" (ISO 8859-9)
+.IP \(bu 2
+"Latin6" (ISO 8859-10)
+.IP \(bu 2
+"Thai" (ISO 8859-11)
+.IP \(bu 2
+"Latin7" (ISO 8859-13)
+.IP \(bu 2
+"Latin8" (ISO 8859-14)
+.IP \(bu 2
+"Latin9" (ISO 8859-15)
+.\" As of Aug 2005, Latin10 is not yet supported...
+.\" .IP \(bu 2
+.\" "Latin10" (ISO 8859-16)
+.IP \(bu 2
+"KOI8-R" (Russian)
+.IP \(bu 2
+"KOI8-U" (Ukrainian)
+.IP \(bu 2
+"Roman8"
+.RE
+.RE
+.LP
+
 .TP
 .BR \-T " [B|I|R]"
 Select the default typeface
@@ -1807,10 +1988,10 @@ calendar(1).
 For more information on PostScript, consult the free, online Adobe book
 entitled
 .IR "PostScript Language Reference Manual" , 
-which can be found here (as of Dec 2004):
+which can be found here (as of Aug 2005):
 .RS
 .LP
-.IR http://partners.adobe.com/asn/tech/ps/specifications.jsp
+.IR http://partners.adobe.com/public/developer/ps/index_specs.html
 .RE
 .LP
 
@@ -1825,13 +2006,15 @@ regrettably been lost.  This C version was originally created by Ken Keirnan
 of Pacific Bell; additional enhancements by Joseph P. Larson, Ed Hand, Andrew
 Rogers, Mark Kantrowitz, Joe Brownlee, Andy Fyfe, Steve Grandi, Geoff
 Kuenning, Stefan Fronzek (1-column HTML output), Don Laursen (`Friday the
-13th' events), and Bill Marr (embedded EPS images, command-line paper size
-specification, and new paper sizes [legal & tabloid]).  The moon routines were
-originally written by Jef Poskanzer and Craig Leres, and were incorporated
-into
+13th' events), Bill Bogstad (event deletion capability), and Bill Marr
+(embedded EPS images, command-line paper size specification, new paper sizes
+[legal & tabloid], additional character mappings for new languages, and
+various cleanups).  The moon routines were originally written by Jef Poskanzer
+and Craig Leres, and were incorporated into
 .I pcal
-by Richard Dyson.  International language support was initially
-added by Angelo Haritsis.  Additional languages were added by Andrew Rogers
+by Richard Dyson.  International language support was initially added by
+Angelo Haritsis.  Additional languages were added by Andrew Rogers
 (Esperanto), Lars Wirzenius (Finnish), Pedro Zorzenon Neto (Portuguese), Joel
-Fredrikson (Swedish), Volodymyr M. Lisivka (Ukrainian), and Neeme Praks
-(Estonian).
+Fredrikson (Swedish), Volodymyr M. Lisivka (Ukrainian), Neeme Praks (Estonian,
+Russian, Latvian, Lithuanian), Peter Cernoch (Czech), Ferenc Kruzslicz
+(Hungarian), and Carles Sadurní Anguita (Catalan).

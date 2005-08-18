@@ -8,7 +8,7 @@
 
 # OVERRIDE THE PROGRAM DEFAULTS
 opt -E	# European date format
-#opt -a fi	# print out Finnish days and months
+opt -a fi	# print out Finnish days and months
 
 # print the week and day number on each Sunday
 #all Sunday in all*		 <I>Päivä %j, viiko %w</I>

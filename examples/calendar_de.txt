@@ -9,7 +9,7 @@
 
 # OVERRIDE THE PROGRAM DEFAULTS
 opt -E	# European date format
-#opt -a de	# print out German days and months
+opt -a de	# print out German days and months
 
 # print the week and day number on each Sunday
 #all Sunday in all*		 <I>Tag %j, Woche %w</I>

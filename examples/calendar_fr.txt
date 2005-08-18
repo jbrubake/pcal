@@ -22,7 +22,10 @@
 # =======
 # options
 # =======
-opt -a fr -G samedi-dimanche -d Palatino-Bold/14 -n Helvetica-Narrow/8 -t Avant-Garde-Bold-Italic/24 -E -F lundi -K
+opt -a fr     # output language = French
+opt -G samedi-dimanche -E -F lundi -K
+# opt -d Palatino-Bold/14 -n Helvetica-Narrow/8 -t Avant-Garde-Bold-Italic/24
+
 
 # =====
 # Notes
