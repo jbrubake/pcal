@@ -6,13 +6,13 @@
  *		cleanup
  *		clear_syms
  *		date_type
+ *		delete_day_info
  *		do_define
  *		do_ifdef
  *		do_ifndef
  *		do_include
  *		do_undef
  *		enter_day_info
- *		enter_date
  *		enter_note
  *		find_easter
  *		find_odox_easter
@@ -45,46 +45,56 @@
  *		parse_date
  *		parse_ord
  *		parse_rel
+ *		process_date
  *		read_datefile
  *
  * Revision history:
  *
- *	4.8.0	B.Marr	2004-12-15	Prevent potential buffer overflow 
- *					attack caused by malicious calendar
- *					input file by restructuring code to
- *					avoid a 'strcpy()' call in
- *					'get_predef_event()'.  This security
- *					hole was detected by Danny Lungstrom
- *					and reported by D. J. Bernstein.
- * 
- *			2004-12-05	Fix misleading references to "holiday"
- *					to instead refer to "predefined event"
- *					(i.e. not all pre-defined events are
- *					'holidays').  Create and support
- *					concept of 'input' language versus
- *					'output' language.  Remove spaces
- *					embedded within tab fields.
- * 
- *			2004-11-19	Provide an enhanced capability to
- *					process not just simple symbol names
- *					but associated symbolic values too,
- *					based on a patch from (unknown).
- *					Provide support for "Friday the 13th"
- *					events, based on a patch from Don
- *					Laursen (donrl at users dot
- *					sourceforge dot net).  Detect more
- *					than just 3 characters (if available
- *					in the event specification) when
- *					attempting to match a generic token to
- *					either a day-of-week name or a month
- *					name to avoid problem of misdetecting
- *					month names as day-of-week names (for
- *					languages which have such
- *					possibilities, like French) and the
- *					problem of misdetecting month names
- *					and/or day-of-week names for inactive
- *					languages.  Remove Ctl-L (page eject)
- *					characters from source file.
+ *	4.9.0
+ *		B.Marr		2005-08-02
+ *		
+ *		Incorporate patch by Bill Bogstad <bogstad at pobox dot com>
+ *		to provide ability to delete specific events, thereby allowing
+ *		one to exclude one or more events that were inserted as a
+ *		group of events, by using the new 'delete' keyword.
+ *		
+ *		B.Marr		2005-01-23
+ *		
+ *		Fix bug introduced in v4.8.0 whereby a plural specification of
+ *		the day-of-week (e.g. 'all Fridays in Oct') was not being
+ *		recognized.
+ *
+ *	4.8.0
+ *		B.Marr		2004-12-15
+ *		
+ *		Prevent potential buffer overflow attack caused by malicious
+ *		calendar input file by restructuring code to avoid a
+ *		'strcpy()' call in 'get_predef_event()'.  This security hole
+ *		was detected by Danny Lungstrom and reported by
+ *		D. J. Bernstein.
+ *		
+ *		B.Marr		2004-12-05
+ *		
+ *		Fix misleading references to "holiday" to instead refer to
+ *		"predefined event" (i.e. not all pre-defined events are
+ *		'holidays').  Create and support concept of 'input' language
+ *		versus 'output' language.  Remove spaces embedded within tab
+ *		fields.
+ *		
+ *		B.Marr		2004-11-19
+ *		
+ *		Provide an enhanced capability to process not just simple
+ *		symbol names but associated symbolic values too, based on a
+ *		patch from (unknown).  Provide support for "Friday the 13th"
+ *		events, based on a patch from Don Laursen (donrl at users dot
+ *		sourceforge dot net).  Detect more than just 3 characters (if
+ *		available in the event specification) when attempting to match
+ *		a generic token to either a day-of-week name or a month name
+ *		to avoid problem of misdetecting month names as day-of-week
+ *		names (for languages which have such possibilities, like
+ *		French) and the problem of misdetecting month names and/or
+ *		day-of-week names for inactive languages.  Remove Ctl-L (page
+ *		eject) characters from source file.
  *
  *	4.7	AWR	12/15/1998	expand %y into every applicable year
  *					in "year all" mode
@@ -217,6 +227,8 @@ static DATE dates[MAX_DATES+1];		/* array of date structures */
 static char *pp_sym[MAX_PP_SYMS];	/* preprocessor defined symbols */
 static char *pp_val[MAX_PP_SYMS];	/* preprocessor defined symbols' values */
 static int curr_year_reset = FALSE;
+static int delete_entry = FALSE;
+
 
 /*
  * read_datefile - read and parse date file, handling preprocessor lines
@@ -1280,9 +1292,20 @@ get_weekday(cp, wild_ok)
 	}
 
 	/* accept day names in the active 'input' language only */
-	for (w = SUN; w <= SAT; w++)
-           if (ci_strncmp(cp, days_ml[input_language][w], strlen(cp)) == 0)
+	for (w = SUN; w <= SAT; w++) {
+		int compare_count;
+		/* To allow for proper detection of the day-of-week name in
+		 * constructs from the configuration file like 'all Fridays in Oct'
+		 * (i.e. with the plural form of the day-of-week name), we need to
+		 * compare the fewest number of characters of the 2 strings.
+		 */
+		compare_count = 
+			(strlen(cp) < strlen(days_ml[input_language][w])) ? 
+			strlen(cp) : strlen(days_ml[input_language][w]);
+		
+		if (ci_strncmp(cp, days_ml[input_language][w], compare_count) == 0)
 			return w;
+	}
 	
 	return NOT_WEEKDAY;
 }
@@ -1652,6 +1675,104 @@ enter_day_info(m, d, y, text_type, pword)
 
 
 /*
+ * delete_day_info - delete text for specified day.
+ * Returns PARSE_INVDATE if date invalid, PARSE_OK if OK; if symbol FEB_29_OK
+ * is non-zero (cf. pcaldefs.h), will silently ignore Feb 29 of common year.
+ * It will silently ignore attempts to remove non-existent entries.  It also
+ * recalculates is_holiday.
+ */
+int
+#ifdef PROTOS
+delete_day_info(int m,
+		int d,
+		int y,
+		int text_type,
+		char **pword)
+#else
+delete_day_info(m, d, y, text_type, pword)
+		int m, d, y;
+		int text_type;
+		char **pword;
+#endif
+{
+	static year_info *pyear;
+	static int prev_year = 0;
+	month_info *pmonth;
+	day_info *pday, *plast, *pdel = NULL, *pldel = NULL;
+	int is_holiday = FALSE;
+	int found = FALSE;
+	char text[LINSIZ];
+	
+	if (! is_valid(m, d >= FIRST_NOTE_DAY && text_type == NOTE_TEXT ? 1 : d, y))
+		return (m == FEB && d == 29 && FEB_29_OK) ? PARSE_OK : PARSE_INVDATE;
+	
+	if (y != prev_year)		/* avoid unnecessary year lookup */
+		pyear = find_year(y, 1);
+	
+	--m, --d;			/* adjust for use as subscripts */
+	
+	if ((pmonth = pyear->month[m]) == NULL) {	/* ignore delete if no entries exist */
+		return PARSE_OK;
+	}
+	if (pmonth->day[d] == NULL)
+		return PARSE_OK;
+	
+	/* delete text for day from list ignoring differences in only
+	 * spacing and capitalization in the existing entry.
+	 */
+	
+	copy_text(text, pword); /* consolidate text from lbuf into text */
+	
+	if (DEBUG(DEBUG_DATES)) {
+		char *p;
+		fprintf(stderr, "%02d/%02d/%d%c '", m+1, d+1, y,
+			is_holiday ? '*' : ' ');
+		for (p = text; *p; p++)
+			fprintf(stderr, isprint(*p) ? "%c" : "\\%03o",
+				*p & CHAR_MSK);
+		fprintf(stderr, "'\n");
+	}
+
+#if KEEP_NULL_LINES	      /* preserve blank text lines in output */
+	if (*text == '\0' && pmonth->day[d])
+		strcpy(text, BLANK_TEXT);
+#endif
+
+	/* check if non-null and find entry to delete */
+  
+	if (*text) {
+		for (plast = NULL, pday = pmonth->day[d];
+		     pday;
+		     plast = pday, pday = pday->next) {
+			if (ci_strcmp(pday->text, text) == 0) {
+				found = TRUE;
+				pdel = pday;
+				pldel = plast;
+			} else {
+				is_holiday |= pday->is_holiday;
+			}
+		}
+  
+		if (found) {
+			if (pldel) {
+				pldel->next = pdel->next;
+			} else {
+				pmonth->day[d] = pdel->next;
+			}
+			free(pdel);
+  
+			if (is_holiday)
+				pmonth->holidays |= (1L << d);
+			else
+				pmonth->holidays &= ~(1L << d);
+		}
+	}
+  
+	return PARSE_OK;
+}
+
+
+/*
  * enter_note - wrapper around enter_day_info for entering note text
  */
 int
@@ -1684,15 +1805,16 @@ enter_note(mm, pword, n)
 }
 
 /*
- * enter_date - wrapper around enter_day_info for entering date text
+ * process_date - wrapper around enter_day_info/delete_day_info for
+ * entering/deleting date text
  */
 int
 #ifdef PROTOS
-enter_date(char **pword,
+process_date(char **pword,
 	   int *ptext_type,
 	   char ***pptext)
 #else
-enter_date(pword, ptext_type, pptext)
+process_date(pword, ptext_type, pptext)
 	char **pword;
 	int *ptext_type;
 	char ***pptext;
@@ -1705,8 +1827,13 @@ enter_date(pword, ptext_type, pptext)
 	if ((rtn = parse_date(pword, ptext_type, pptext)) == PARSE_OK) {
 		match = FALSE;
 		for (pd = dates; pd->mm; pd++)
-			match |= enter_day_info(pd->mm, pd->dd, pd->yy,
-				    *ptext_type, *pptext) == PARSE_OK;
+
+			if (delete_entry)
+				match |= delete_day_info(pd->mm, pd->dd, pd->yy,
+					*ptext_type, *pptext) == PARSE_OK;
+			else
+				match |= enter_day_info(pd->mm, pd->dd, pd->yy,
+					*ptext_type, *pptext) == PARSE_OK;
 
 		rtn = match ? PARSE_OK : PARSE_NOMATCH;
 	}
@@ -2047,7 +2174,6 @@ parse_date(pword, ptype, pptext)
 
 	case DT_ALL:		/* "all" <weekday> "in" [ <month> | "all" ] */
 				/* or "all" <day>" */
-
 		if ((cp = *(pword+1)) && (*(cp += strspn(cp, DIGITS)) == '\0' ||
 		    *cp == '*')) {
 			dd = atoi(*++pword);		/* "all" <day> */
@@ -2221,6 +2347,11 @@ parse(pword, filename)
 		return PARSE_INVLINE;
 		break;
 
+	case DT_DELETE:         /* fall through to actually delete entry */
+		pword++;
+		delete_entry = TRUE;
+
+
 	/* assume anything else is a date */
 
 	default:
@@ -2237,7 +2368,7 @@ parse(pword, filename)
 			for (curr_year = init_year;
 			     curr_year <= final_year;
 			     curr_year++) {
-				match |= enter_date(pword, &text_type, &ptext) ==
+				match |= process_date(pword, &text_type, &ptext) ==
 						PARSE_OK;
 				if (curr_year_reset) /* quit if year reset */
 					return match ? PARSE_OK : PARSE_NOMATCH;
@@ -2245,10 +2376,14 @@ parse(pword, filename)
 
 			/* restore year to wildcard for next time */
 			curr_year = ALL_YEARS;
+			delete_entry = FALSE;
 			return match ? PARSE_OK : PARSE_NOMATCH;
 		}
 
-		return enter_date(pword, &text_type, &ptext);
+		match = process_date(pword, &text_type, &ptext);
+		delete_entry = FALSE;
+		return match;
+
 		break;
 	}
 }

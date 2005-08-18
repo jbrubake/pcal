@@ -1,4 +1,4 @@
-static char  VERSION_STRING[]	= "@(#)pcal v4.8.0 - generate PostScript calendars";
+static char  VERSION_STRING[]	= "@(#)pcal v4.9.0 - generate PostScript calendars";
 /*
  * pcal.c - generate PostScript file to print calendar for any month and year
  *
@@ -37,21 +37,36 @@ static char  VERSION_STRING[]	= "@(#)pcal v4.8.0 - generate PostScript calendars
  *
  * Revision history:
  *
- *	4.8.0	B.Marr	2004-12-04	Support new paper sizes.  Support 
- *					specification of paper size via
- *					run-time option (command-line, etc).
- *					Define new pre-processor symbols for
- *					paper size and page orientation.
- *					Remove spaces embedded within tab
- *					fields.  Create and support concept of
- *					'input' language versus 'output'
- *					language.
- *					
- *			2004-11-13	Update version number in version
- *					string. Use new KOI8U mapping for
- *					newly-added Ukrainian language
- *					support.  Remove Ctl-L (page eject)
- *					characters from source file.
+ *	4.9.0
+ *		B.Marr		2005-08-08
+ *		
+ *		Eliminate the hack to support Esperanto via a custom,
+ *		dedicated character encoding.  Esperanto is now handled
+ *		generically by the 'Latin3' (ISO 8859-3) character encoding.
+ *		
+ *		B.Marr		2005-01-24
+ *		
+ *		Update version number in version string.
+ *		
+ *		Add support for several new character mappings (PostScript
+ *		encoding vectors) in order to support a wider variety of
+ *		languages.  Rename enumerations for existing encodings to be
+ *		more consistent (and easily searchable).
+ * 
+ *	4.8.0
+ *		B.Marr		2004-12-04
+ *		
+ *		Support new paper sizes.  Support specification of paper size
+ *		via run-time option (command-line, etc).  Define new
+ *		pre-processor symbols for paper size and page orientation.
+ *		Remove spaces embedded within tab fields.  Create and support
+ *		concept of 'input' language versus 'output' language.
+ *		
+ *		B.Marr		2004-11-13
+ *		
+ *		Update version number in version string. Use new KOI8U mapping
+ *		for newly-added Ukrainian language support.  Remove Ctl-L
+ *		(page eject) characters from source file.
  *
  *	4.7.1	SF	01/06/2003	added q-flag for 1-column output
  *
@@ -895,6 +910,8 @@ main(argc, argv)
 	if (map_default == TRUE)
 		mapfonts = lang_mapping[output_language];
 
+	/* fprintf(stderr, "Font mapping is %d\n", mapfonts); */
+
 	/* select an appropriate color for holidays if not set explicitly */
 	if (holiday_color == HOLIDAY_DEFAULT)
 		holiday_color = select_color();
@@ -1299,17 +1316,45 @@ get_args(argv, curr_pass, where, get_numargs)
 
 		case F_REMAP_FONT:	/* specify 8-bit font mapping */
 			if (parg) {
-				if (ci_strncmp(parg, MAPPING_R, 1) == 0)
-					mapfonts = ROMAN8;
-				else if (ci_strncmp(parg, MAPPING_L, 1) == 0)
-					mapfonts = LATIN1;
-				else if (ci_strncmp(parg, MAPPING_KOI, 1) == 0)
-					mapfonts = KOI8U;
-				else if (ci_strncmp(parg, MAPPING_E, 1) == 0)
-					mapfonts = ESPERANTO;
+				if (ci_strncmp(parg, MAPPING_LATIN_1, strlen(parg)) == 0)
+					mapfonts = ENC_LATIN_1;
+				else if (ci_strncmp(parg, MAPPING_LATIN_2, strlen(parg)) == 0)
+					mapfonts = ENC_LATIN_2;
+				else if (ci_strncmp(parg, MAPPING_LATIN_3, strlen(parg)) == 0)
+					mapfonts = ENC_LATIN_3;
+				else if (ci_strncmp(parg, MAPPING_LATIN_4, strlen(parg)) == 0)
+					mapfonts = ENC_LATIN_4;
+				else if (ci_strncmp(parg, MAPPING_CYRILLIC, strlen(parg)) == 0)
+					mapfonts = ENC_CYRILLIC;
+				/* else if (ci_strncmp(parg, MAPPING_ARABIC, strlen(parg)) == 0) */
+					/* mapfonts = ENC_ARABIC; */
+				else if (ci_strncmp(parg, MAPPING_GREEK, strlen(parg)) == 0)
+					mapfonts = ENC_GREEK;
+				/* else if (ci_strncmp(parg, MAPPING_HEBREW, strlen(parg)) == 0) */
+					/* mapfonts = ENC_HEBREW; */
+				else if (ci_strncmp(parg, MAPPING_LATIN_5, strlen(parg)) == 0)
+					mapfonts = ENC_LATIN_5;
+				else if (ci_strncmp(parg, MAPPING_LATIN_6, strlen(parg)) == 0)
+					mapfonts = ENC_LATIN_6;
+				else if (ci_strncmp(parg, MAPPING_THAI, strlen(parg)) == 0)
+					mapfonts = ENC_THAI;
+				else if (ci_strncmp(parg, MAPPING_LATIN_7, strlen(parg)) == 0)
+					mapfonts = ENC_LATIN_7;
+				else if (ci_strncmp(parg, MAPPING_LATIN_8, strlen(parg)) == 0)
+					mapfonts = ENC_LATIN_8;
+				else if (ci_strncmp(parg, MAPPING_LATIN_9, strlen(parg)) == 0)
+					mapfonts = ENC_LATIN_9;
+				/* else if (ci_strncmp(parg, MAPPING_LATIN_10, strlen(parg)) == 0) */
+					/* mapfonts = ENC_LATIN_10; */
+				else if (ci_strncmp(parg, MAPPING_KOI8_R, strlen(parg)) == 0)
+					mapfonts = ENC_KOI8_R;
+				else if (ci_strncmp(parg, MAPPING_KOI8_U, strlen(parg)) == 0)
+					mapfonts = ENC_KOI8_U;
+				else if (ci_strncmp(parg, MAPPING_ROMAN8, strlen(parg)) == 0)
+					mapfonts = ENC_ROMAN8;
 				else
-					mapfonts = NOMAP;
-			} else
+					mapfonts = ENC_NONE;
+			} else /* Use the value defined in the 'Makefile' */
 				mapfonts = MAPFONTS;
 
 			map_default = !parg;
@@ -1688,23 +1733,7 @@ color_msg()
 	msg[0] = '\0';
 	for (i = SUN; i <= SAT; i++)
 		if (default_color[i] != others) {
-#if (LANG_DEFAULT == LANG_ESPERANTO)
-			/* remap accented characters to non-accented versions */
-			int n;
-			char c, *p;
-			char esp_str[MIN_DAY_LEN+1];
-			static char *esp_remap = ESP_REMAPPING;
-			for (n = 0; n < MIN_DAY_LEN; n++) {
-				c = days_ml[LANG_DEFAULT][i][n];
-				if (p = strchr(esp_remap, c))
-					c = ESP_ACCENT[p - esp_remap];
-				esp_str[n] = c;
-			}
-			esp_str[MIN_DAY_LEN] = '\0';
-			strcat(msg, esp_str);
-#else
 			strncat(msg, days_ml[LANG_DEFAULT][i], MIN_DAY_LEN);
-#endif
 			strcat(msg, "/");
 		}
 	LASTCHAR(msg) = ' ';

@@ -4,38 +4,74 @@
  *
  * Revision history:
  *
- *	4.8.0	B.Marr	2004-12-12	Add Russian, Latvian, and Lithuanian 
- *					language support all based on patches
- *					from Neeme Praks (nemecec at users dot
- *					sourceforge dot net).
- * 
- *			2004-12-04	Fix misleading references to "holiday"
- *					to instead refer to "predefined event"
- *					(i.e. not all pre-defined events are
- *					'holidays').  Create and support
- *					concept of 'input' language versus
- *					'output' language.  Support new paper
- *					sizes.  Support specification of paper
- *					size via run-time option
- *					(command-line, etc).  Remove spaces
- *					embedded within tab fields.  Clarify
- *					help text output ('pcal -h').
-
- *			2004-11-11	Add Swedish, Ukrainian, Portuguese,
- *					and Estonian languages based
- *					respectively on patches from Joel
- *					Fredrikson (joel at it dot uu dot se),
- *					Volodymyr M. Lisivka (lvm at mystery
- *					dot lviv dot net), Pedro Zorzenon Neto
- *					(pzn at terra dot com dot br), and
- *					Neeme Praks (nemecec at users dot
- *					sourceforge dot net).  Provide support
- *					for "Friday the 13th" events, based on
- *					a patch from Don Laursen (donrl at
- *					users dot sourceforge dot net).  Merge
- *					content from (now-obsolete) files
- *					'months.h' and 'days.h' into this
- *					file.
+ *	4.9.0
+ *		B.Marr		2005-08-08
+ *		
+ *		Eliminate the hack to support Esperanto via a custom,
+ *		dedicated character encoding.  Esperanto is now handled
+ *		generically by the 'Latin3' (ISO 8859-3) character encoding.
+ *		
+ *		Fix long-standing error in Spanish 'Saturday' string (the
+ *		first 'a' needed an acute accent).
+ *		
+ *		Replace certain uses of 'u'+circumflex with the proper
+ *		'u'+macron in certain Latvian and Lithuanian month names.
+ *		
+ *		B.Marr		2005-08-02
+ *		
+ *		Support new 'delete' keyword, from Bill Bogstad's 'event
+ *		deletion' patch.
+ *		
+ *		Support new language: Catalan (thanks to Carles SadurnÌ
+ *		Anguita <blat at puntnet.org>).
+ *		
+ *		To be consistent, convert all high-order characters in the
+ *		language string specifications to simple octal format, to
+ *		match the octal format used in the PostScript encoding vector
+ *		specifications of 'pcalinit.ps'.  This makes it easier to edit
+ *		this ('pcallang.h') file in any editor.  It also makes
+ *		checking of the language strings against the character
+ *		encodings simpler.
+ *		
+ *		B.Marr		2005-01-04
+ *		
+ *		Support new character encodings (KOI8-R and several 'ISO
+ *		8859-*' encodings).  Use new KOI8-R character mapping to
+ *		properly support Russian langauge.  Use new Latin-4 character
+ *		mapping to properly support Lithuanian and Latvian langauges.
+ *		
+ *		Support new languages: Czech (thanks to Peter Cernoch
+ *		<pcernoch at volny dot cz>) and Hungarian (thanks to Ferenc
+ *		Kruzslicz <kruzslic at ktk.pte.hu>)
+ *
+ *	4.8.0
+ *		B.Marr		2004-12-12
+ *		
+ *		Add Russian, Latvian, and Lithuanian language support all
+ *		based on patches from Neeme Praks (nemecec at users dot
+ *		sourceforge dot net).
+ *		
+ *		B.Marr		2004-12-04
+ *		
+ *		Fix misleading references to "holiday" to instead refer to
+ *		"predefined event" (i.e. not all pre-defined events are
+ *		'holidays').  Create and support concept of 'input' language
+ *		versus 'output' language.  Support new paper sizes.  Support
+ *		specification of paper size via run-time option (command-line,
+ *		etc).  Remove spaces embedded within tab fields.  Clarify help
+ *		text output ('pcal -h').
+ *		
+ *		B.Marr		2004-11-11
+ *		
+ *		Add Swedish, Ukrainian, Portuguese, and Estonian languages
+ *		based respectively on patches from Joel Fredrikson (joel at it
+ *		dot uu dot se), Volodymyr M. Lisivka (lvm at mystery dot lviv
+ *		dot net), Pedro Zorzenon Neto (pzn at terra dot com dot br),
+ *		and Neeme Praks (nemecec at users dot sourceforge dot net).
+ *		Provide support for "Friday the 13th" events, based on a patch
+ *		from Don Laursen (donrl at users dot sourceforge dot net).
+ *		Merge content from (now-obsolete) files 'months.h' and
+ *		'days.h' into this file.
  *
  *	4.7.1	SF	01/06/2003	added F_1COLUMN and Finnish language
  *
@@ -178,10 +214,10 @@
 
 #define W_ROMAN		"Roman"		/* for -T usage message */
 
-#define DAYSIZE 20	/* large enough for longest string in days[] below */
+#define DAYSIZE 20	/* large enough for longest string in days_ml[] below */
 #define LANGSIZE 20	/* large enough for longest string in lang_id[] below */
 
-#define NUM_LANGUAGES		15	/* *** Change this if adding languages *** */
+#define NUM_LANGUAGES		18	/* *** Change this if adding languages *** */
 #define LANG_ENGLISH		0
 #define LANG_GREEK		1
 #define LANG_ITALIAN		2
@@ -197,23 +233,13 @@
 #define LANG_RUSSIAN 		12
 #define LANG_LATVIAN		13
 #define LANG_LITHUANIAN		14
+#define LANG_CZECH		15
+#define LANG_HUNGARIAN		16
+#define LANG_CATALAN		17
 
 #ifndef LANG_DEFAULT
 #define LANG_DEFAULT	LANG_ENGLISH
-
 #endif
-
-/*
- * String constants for translation of accented characters in Esperanto (cf.
- * esperanto_esc() in pcalutil.c); support [cCgGhHjJsSuU][xX^] and [uU]~
- *
- * Note: the remappings must a) be in the same order as the accented character
- * list; and b) conform to the remappings in pcalutil.ps (q.v.)
- */
-#define ESP_ACCENT	"cCgGhHjJsSuU"
-#define ESP_ESCAPE	"xX^"
-#define TILDE		'~'
-#define ESP_REMAPPING	"\346\306\370\330\266\246\274\254\376\336\375\335"
 
 #ifdef MAIN_MODULE
 
@@ -268,7 +294,7 @@ char *months_ml[NUM_LANGUAGES][12] = {
      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" },
 
    /* Finnish */
-   { "Tammikuu", "Helmikuu", "Maaliskuu", "Huhtikuu", "Toukokuu", "Kes\344kuu", 
+   { "Tammikuu", "Helmikuu", "Maaliskuu", "Huhtikuu", "Toukokuu", "Kes\344kuu",
      "Hein\344kuu", "Elokuu", "Syyskuu", "Lokakuu", "Marraskuu", "Joulukuu" },
 
    /* Swedish */
@@ -280,30 +306,60 @@ char *months_ml[NUM_LANGUAGES][12] = {
      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro" },
 
    /* Ukrainian */
-   { "\xD3\xA6\xDE\xC5\xCE\xD8",		"\xCC\xC0\xD4\xC9\xCA", 
-     "\xC2\xC5\xD2\xC5\xDA\xC5\xCE\xD8",	"\xCB\xD7\xA6\xD4\xC5\xCE\xD8", 
-     "\xD4\xD2\xC1\xD7\xC5\xCE\xD8",		"\xDE\xC5\xD2\xD7\xC5\xCE\xD8", 
-     "\xCC\xC9\xD0\xC5\xCE\xD8",		"\xD3\xC5\xD2\xD0\xC5\xCE\xD8", 
-     "\xD7\xC5\xD2\xC5\xD3\xC5\xCE\xD8",	"\xD6\xCF\xD7\xD4\xC5\xCE\xD8", 
-     "\xCC\xC9\xD3\xD4\xCF\xD0\xC1\xC4",	"\xC7\xD2\xD5\xC4\xC5\xCE\xD8" },
+   { "\323\246\336\305\316\330",
+     "\314\300\324\311\312", 
+     "\302\305\322\305\332\305\316\330",
+     "\313\327\246\324\305\316\330", 
+     "\324\322\301\327\305\316\330",
+     "\336\305\322\327\305\316\330", 
+     "\314\311\320\305\316\330",
+     "\323\305\322\320\305\316\330", 
+     "\327\305\322\305\323\305\316\330",
+     "\326\317\327\324\305\316\330", 
+     "\314\311\323\324\317\320\301\304",
+     "\307\322\325\304\305\316\330" },
 
    /* Estonian */
    { "Jaanuar", "Veebruar", "M‰rts", "Aprill", "Mai", "Juuni",
      "Juuli", "August", "September", "Oktoober", "November", "Detsember" },
 
    /* Russian */
-   { "—Œ◊¡“ÿ", "∆≈◊“¡Ãÿ", "Õ¡“‘", "¡–“≈Ãÿ", "Õ¡ ", "…¿Œÿ", "…¿Ãÿ",
-     "¡◊«’”‘", "”≈Œ‘—¬“ÿ", "œÀ‘—¬“ÿ", "Œœ—¬“ÿ", "ƒ≈À¡¬“ÿ" },
+   { "\321\316\327\301\322\330",
+     "\306\305\327\322\301\314\330", 
+     "\315\301\322\324",
+     "\301\320\322\305\314\330", 
+     "\315\301\312",
+     "\311\300\316\330", 
+     "\311\300\314\330",
+     "\301\327\307\325\323\324", 
+     "\323\305\316\324\321\302\322\330",
+     "\317\313\324\321\302\322\330", 
+     "\316\317\321\302\322\330",
+     "\304\305\313\301\302\322\330" },
 
    /* Latvian */
-   { "janv‚ris", "febru‚ris", "marts", "aprÓlis",
-     "maijs", "j˚nijs", "j˚lijs", "augusts", 
+   { "janv\340ris", "febru\340ris", "marts", "apr\357lis",
+     "maijs", "j\376nijs", "j\376lijs", "augusts", 
      "septembris", "oktobris", "novembris", "decembris" },
 
    /* Lithuanian */
    { "Sausis", "Vasaris", "Kovas", "Balandis",
-     "Gegu˛Î", "Bir˛elis", "Liepa", "Rugpj˚tis",
-     "RugsÎjis", "Spalis", "Lapkritis", "Gruodis" },
+     "Gegu\276\354", "Bir\276elis", "Liepa", "Rugpj\376tis",
+     "Rugs\354jis", "Spalis", "Lapkritis", "Gruodis" },
+
+   /* Czech */
+   { "Leden", "\332nor", "B\370ezen", "Duben",
+     "Kv\354ten", "\310erven", "\310ervenec", "Srpen",
+     "Z\341\370\355", "\330\355jen", "Listopad", "Prosinec" },
+
+   /* Hungarian */
+   { "Janu\341r", "Febru\341r", "M\341rcius", "\301prilis",
+     "M\341jus", "J\372nius", "J\372lius", "Augusztus",
+     "Szeptember", "Okt\363ber", "November", "December" },
+
+   /* Catalan */
+   { "Gener", "Febrer", "Mar\347", "Abril", "Maig", "Juny", 
+     "Juliol", "Agost", "Setembre", "Octubre", "Novembre", "Desembre" },
 
 };
 
@@ -342,7 +398,7 @@ char days_ml[NUM_LANGUAGES][7][DAYSIZE] = {
    
    /* Spanish */
    { "Domingo", "Lunes", "Martes", "Mi\351rcoles", "Jueves", "Viernes", 
-     "Sabado" },
+     "S\341bado" },
    
    /* Finnish */
    { "Sunnuntai", "Maanantai", "Tiistai", "Keskiviikko", "Torstai", 
@@ -357,26 +413,41 @@ char days_ml[NUM_LANGUAGES][7][DAYSIZE] = {
      "S\341bado" },
    
    /* Ukrainian */
-   { "\xCE\xC5\xC4\xA6\xCC\xD1", "\xD0\xCF\xCE\xC5\xC4\xA6\xCC\xCF\xCB", 
-     "\xD7\xA6\xD7\xD4\xCF\xD2\xCF\xCB", "\xD3\xC5\xD2\xC5\xC4\xC1", 
-     "\xDE\xC5\xD4\xD7\xC5\xD2\xC7", "\xD0\x27\xD1\xD4\xCE\xC9\xC3\xD1", 
-     "\xD3\xD5\xC2\xCF\xD4\xC1" },
+   { "\316\305\304\246\314\321", "\320\317\316\305\304\246\314\317\313", 
+     "\327\246\327\324\317\322\317\313", "\323\305\322\305\304\301", 
+     "\336\305\324\327\305\322", "\320\047\321\324\316\311\303\321", 
+     "\323\325\302\317\324\301" },
    
    /* Estonian */
    { "P\374hap\344ev", "Esmasp\344ev", "Teisip\344ev", "Kolmap\344ev", 
      "Neljap\344ev", "Reede", "Laup\344ev" },
 
    /* Russian */
-   { "◊œ”À“≈”≈Œÿ≈", "–œŒ≈ƒ≈ÃÿŒ…À", "◊‘œ“Œ…À", "”“≈ƒ¡", 
-     "ﬁ≈‘◊≈“«", "–—‘Œ…√¡", "”’¬¬œ‘¡" }, 
+   { "\327\317\323\313\322\305\323\305\316\330\305", 
+     "\320\317\316\305\304\305\314\330\316\311\313", 
+     "\327\324\317\322\316\311\313", "\323\322\305\304\301", 
+     "\336\305\324\327\305\322\307", "\320\321\324\316\311\303\301", 
+     "\323\325\302\302\317\324\301" }, 
 
    /* Latvian */
-   { "SvÁtdiena", "Pirmdiena", "Otrdiena", "Trediena",
+   { "Sv\272tdiena", "Pirmdiena", "Otrdiena", "Tre\271diena",
      "Ceturtdiena", "Piektdiena", "Sestdiena" },
 
    /* Lithuanian */
-   { "Sekmadienis", "Pirmadienis", "Antradienis", "TreËiadienis",
-     "Ketvirtadienis", "Penktadienis", "–etadienis" },
+   { "Sekmadienis", "Pirmadienis", "Antradienis", "Tre\350iadienis",
+     "Ketvirtadienis", "Penktadienis", "\251e\271tadienis" },
+
+   /* Czech */
+   { "Ned\354le", "Pond\354l\355", "\332ter\375", "St\370eda", 
+     "\310tvrtek", "P\341tek", "Sobota" },
+
+   /* Hungarian */
+   { "Vas\341rnap", "H\351tf\365", "Kedd", "Szerda",
+     "Cs\374t\366rt\366k", "P\351ntek", "Szombat" },
+
+   /* Catalan */
+   { "Diumenge", "Dilluns", "Dimarts", "Dimecres", 
+     "Dijous", "Divendres", "Dissabte" },
 
 };
 
@@ -405,7 +476,7 @@ char days_ml_short[NUM_LANGUAGES][7][DAYSIZE] = {
    { "Dim", "Lun", "Mar", "Mer", "\254a\375", "Ven", "Sab" },
    
    /* Spanish */
-   { "Dom", "Lun", "Mar", "Mi\351", "Jue", "Vie", "Sab" },
+   { "Dom", "Lun", "Mar", "Mi\351", "Jue", "Vie", "S\341b" },
    
    /* Finnish */
    { "Su", "Ma", "Ti", "Ke", "To", "Pe", "La" },
@@ -417,20 +488,30 @@ char days_ml_short[NUM_LANGUAGES][7][DAYSIZE] = {
    { "Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "S\341b" },
    
    /* Ukrainian */
-   { "\xCE\xC4", "\xD0\xCE", "\xD7\xD4", "\xD3\xD2", "\xDE\xD4", "\xD0\xD4", 
-     "\xD3\xC2" },
+   { "\316\304", "\320\316", "\327\324", "\323\322", 
+     "\336\324", "\320\324", "\323\302" },
 
    /* Estonian */
    { "P", "E", "T", "K", "N", "R", "L" },
 
    /* Russian */
-   { "˜”", "Œ", "˜‘", "Û“", "˛‘", "‘", "Û¬" }, 
+   { "\367\323", "\360\316", "\367\324", "\363\322", 
+     "\376\324", "\360\324", "\363\302" }, 
 
    /* Latvian */
    { "Sv", "Pm", "Ot", "Tr", "Ce", "Pt", "Se" },
 
    /* Lithuanian */
-   { "S", "Pr", "A", "T", "K", "P", "–" },
+   { "S", "Pr", "A", "T", "K", "P", "\251" },
+
+   /* Czech */
+   { "Ne", "Po", "\332t", "St", "\310t", "P\341", "So" },
+
+   /* Hungarian */
+   { "V", "H", "K", "Sze", "Cs", "P", "Szo" },
+
+   /* Catalan */
+   { "Dg", "Dl", "Dm", "Dc", "Dj", "Dv", "Ds" },
 
 };
 
@@ -440,6 +521,12 @@ char days_ml_short[NUM_LANGUAGES][7][DAYSIZE] = {
  * enumeration above (must be a 2-D array so address within may be used
  * as an initializer); the full name (in brackets) is used only when
  * printing the default in the usage message (see MIN_LANG_LEN below)
+ * 
+ * The codes used here should match the 2-letter version of the ISO 639
+ * (language code) standard.  Do not use the ISO 3166 (country code) standard
+ * since those values are often different from the language code values
+ * (e.g. Sweden country code = 'se', Swedish language code = 'sv').
+ * 
  */
 char lang_id[NUM_LANGUAGES][LANGSIZE] = {
 	"en [English]",
@@ -457,27 +544,33 @@ char lang_id[NUM_LANGUAGES][LANGSIZE] = {
 	"ru [Russian]",
 	"lv [Latvian]",
 	"lt [Lithuanian]",
+	"cs [Czech]",
+	"hu [Hungarian]",
+	"ca [Catalan]",
 };
 
 /*
- * the default mapping for the above languages
+ * Associate a default character mapping with each of the supported languages.
  */
 int lang_mapping[] = {
-	NOMAP,		/* English */
-	LATIN1,		/* Greek */
-	LATIN1,		/* Italian */
-	LATIN1,		/* French */
-	LATIN1,		/* German */
-	ESPERANTO,	/* Esperanto */
-	LATIN1,		/* Spanish */
-	LATIN1,		/* Finnish */
-	LATIN1,		/* Swedish */
-	LATIN1,		/* Portuguese */
-	KOI8U,		/* Ukrainian */
-	LATIN1,		/* Estonian */
-	KOI8U,		/* Russian -- should be KOI8R, but not supported! */
-	LATIN1,		/* Latvian -- should be ISO-8859-13, but not supported! */
-	LATIN1,		/* Lithuanian -- should be ISO-8859-13, but not supported! */
+	ENC_NONE,	/* English */
+	ENC_GREEK,	/* Greek */
+	ENC_LATIN_1,	/* Italian */
+	ENC_LATIN_1,	/* French */
+	ENC_LATIN_1,	/* German */
+	ENC_LATIN_3,	/* Esperanto */
+	ENC_LATIN_1,	/* Spanish */
+	ENC_LATIN_1,	/* Finnish */
+	ENC_LATIN_1,	/* Swedish */
+	ENC_LATIN_1,	/* Portuguese */
+	ENC_KOI8_U,	/* Ukrainian */
+	ENC_LATIN_1,	/* Estonian */
+	ENC_KOI8_R,	/* Russian */
+	ENC_LATIN_4,	/* Latvian */
+	ENC_LATIN_4,	/* Lithuanian */
+	ENC_LATIN_2,	/* Czech */
+	ENC_LATIN_2,	/* Hungarian */
+	ENC_LATIN_1,	/* Catalan */
 };
 
 /* Define the default 'input' language (for interpretation of dates on events
@@ -600,6 +693,7 @@ KWD keywds[] = {
 	{ "opt",		DT_OPT },
 	{ "input-language",	DT_INPUT_LANGUAGE },
 	{ "year",		DT_YEAR },
+	{ "delete",		DT_DELETE },
 	{ NULL,			DT_OTHER }	/* must be last */
 };
 
@@ -954,23 +1048,45 @@ FLAG_MSG flag_msg[] = {
 	{ ' ',		NULL,		" ",							TITLEFONT },
 	{ END_GROUP },
 
-	{ F_REMAP_FONT,	W_MAPPING,	"remap 8-bit characters (Roman8/Latin1/Esperanto/koi8u)", NULL },
-#if MAPFONTS == LATIN1
-	{ GROUP_DEFAULT,									MAPPING_L },
-#else
-#if MAPFONTS == ROMAN8	
-	{ GROUP_DEFAULT,									MAPPING_R },
-#else
-#if MAPFONTS == ESPERANTO
-	{ GROUP_DEFAULT,									MAPPING_E },
-#else
-#if MAPFONTS == KOI8U
-	{ GROUP_DEFAULT,									MAPPING_KOI },
+	{ F_REMAP_FONT,	W_MAPPING,	"remap 8-bit characters (Latin1, KOI8-U, Roman8, etc)", NULL },
+#if MAPFONTS == ENC_LATIN_1
+	{ GROUP_DEFAULT,									MAPPING_LATIN_1 },
+#elif MAPFONTS == ENC_LATIN_2
+	{ GROUP_DEFAULT,									MAPPING_LATIN_2 },
+#elif MAPFONTS == ENC_LATIN_3
+	{ GROUP_DEFAULT,									MAPPING_LATIN_3 },
+#elif MAPFONTS == ENC_LATIN_4
+	{ GROUP_DEFAULT,									MAPPING_LATIN_4 },
+#elif MAPFONTS == ENC_CYRILLIC
+	{ GROUP_DEFAULT,									MAPPING_CYRILLIC },
+/* #elif MAPFONTS == ENC_ARABIC */  /* currently unsupported */
+/* 	{ GROUP_DEFAULT,									MAPPING_ARABIC }, */
+#elif MAPFONTS == ENC_GREEK
+	{ GROUP_DEFAULT,									MAPPING_GREEK },
+/* #elif MAPFONTS == ENC_HEBREW */  /* currently unsupported */
+/* 	{ GROUP_DEFAULT,									MAPPING_HEBREW }, */
+#elif MAPFONTS == ENC_LATIN_5
+	{ GROUP_DEFAULT,									MAPPING_LATIN_5 },
+#elif MAPFONTS == ENC_LATIN_6
+	{ GROUP_DEFAULT,									MAPPING_LATIN_6 },
+#elif MAPFONTS == ENC_THAI
+	{ GROUP_DEFAULT,									MAPPING_THAI },
+#elif MAPFONTS == ENC_LATIN_7
+	{ GROUP_DEFAULT,									MAPPING_LATIN_7 },
+#elif MAPFONTS == ENC_LATIN_8
+	{ GROUP_DEFAULT,									MAPPING_LATIN_8 },
+#elif MAPFONTS == ENC_LATIN_9
+	{ GROUP_DEFAULT,									MAPPING_LATIN_9 },
+/* #elif MAPFONTS == ENC_LATIN_10 */  /* currently unsupported */
+/* 	{ GROUP_DEFAULT,									MAPPING_LATIN_10 }, */
+#elif MAPFONTS == ENC_KOI8_R
+	{ GROUP_DEFAULT,									MAPPING_KOI8_R },
+#elif MAPFONTS == ENC_KOI8_U
+	{ GROUP_DEFAULT,									MAPPING_KOI8_U },
+#elif MAPFONTS == ENC_ROMAN8
+	{ GROUP_DEFAULT,									MAPPING_ROMAN8 },
 #else
 	{ GROUP_DEFAULT,									"language-specific mapping" },
-#endif
-#endif
-#endif
 #endif
 	{ END_GROUP },
 

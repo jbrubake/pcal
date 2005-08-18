@@ -12,6 +12,7 @@
  *		print_colors
  *		print_dates
  *		print_db_word
+ *		print_html
  *		print_julian_info
  *		print_month
  *		print_moon_info
@@ -28,30 +29,53 @@
  *
  * Revision history:
  *
- *	4.8.0	B.Marr	2004-12-04	Support new paper sizes.  Support 
- *					specification of paper size via
- *					run-time option (command-line, etc).
- *					Create and support concept of 'input'
- *					language versus 'output' language.
- *					Use separate variables for X/Y scaling
- *					and X/Y translation done by the
- *					program to distinguish from the X/Y
- *					scaling and X/Y translation specified
- *					by the user.
+ *	4.9.0
+ *		B.Marr		2005-08-10
+ *		
+ *		Fix a long-standing bug whereby a centered "footer"
+ *		specification with 'strftime()'-like date specifiers used in
+ *		an HTML yearly calendar was using/showing the correct date
+ *		values for the HTML 'title' but the wrong date values for the
+ *		centered header string at the start of the actual displayed
+ *		(HTML) content.
+ *		
+ *		Eliminate the hack to support Esperanto via a custom,
+ *		dedicated character encoding.  Esperanto is now handled
+ *		generically by the 'Latin3' (ISO 8859-3) character encoding.
+ *		
+ *		B.Marr		2005-08-02
+ *		
+ *		Per a user's request, change the separator character from a
+ *		space to a tab when using the '-c' option (to output text
+ *		lines which are compatible with the Unix 'calendar' program).
+ *		
+ *		B.Marr		2005-01-04
+ *		
+ *		Add support for several new character mappings (PostScript
+ *		encoding vectors) in order to support a wider variety of
+ *		languages.  Rename enumerations for all encodings to be more
+ *		consistent (and easily searchable).
  * 
- *			2004-11-19	Support KOI8U character encodings (for
- *					Ukrainian language support) and
- *					provide abbreviated day-of-week names,
- *					both based on a patch from Volodymyr
- *					M. Lisivka.  Provide support for
- *					embedded EPS images (photos, icons,
- *					etc) for monthly PostScript calendars.
- *					Fix bug since v4.7.1 whereby use of
- *					'-q' flag required '-F 1' to prevent
- *					wrong weekday display.  Remove spaces
- *					embedded within tab fields.  Remove
- *					Ctl-L (page eject) characters from
- *					source file.
+ *	4.8.0
+ *		B.Marr		2004-12-04
+ *		
+ *		Support new paper sizes.  Support specification of paper size
+ *		via run-time option (command-line, etc).  Create and support
+ *		concept of 'input' language versus 'output' language.  Use
+ *		separate variables for X/Y scaling and X/Y translation done by
+ *		the program to distinguish from the X/Y scaling and X/Y
+ *		translation specified by the user.
+ *		
+ *		B.Marr		2004-11-19
+ *		
+ *		Support KOI8U character encodings (for Ukrainian language
+ *		support) and provide abbreviated day-of-week names, both based
+ *		on a patch from Volodymyr M. Lisivka.  Provide support for
+ *		embedded EPS images (photos, icons, etc) for monthly
+ *		PostScript calendars.  Fix bug since v4.7.1 whereby use of
+ *		'-q' flag required '-F 1' to prevent wrong weekday display.
+ *		Remove spaces embedded within tab fields.  Remove Ctl-L (page
+ *		eject) characters from source file.
  *
  *	4.7.1	SF	01/06/2003	html output with one column per month
  *					(cf. single_month_one_column_html)
@@ -465,17 +489,30 @@ write_psfile()
 
 	/*
 	 * if 8-bit remapping has been requested (-r flag), create new fonts
-	 * with desired character remapping (Roman8, Latin1, Esperanto, or
-	 * KOI8U as requested)
+	 * with desired character remapping
 	 */
 
-	if (mapfonts != NOMAP) {
+	if (mapfonts != ENC_NONE) {
 
 		/* include desired mapping */
-		GEN_PSCODE(mapfonts == ROMAN8 ? ps_roman8 :
-			   mapfonts == LATIN1 ? ps_latin1 :
-			   mapfonts == KOI8U  ? ps_koi8u :
-						ps_esperanto);
+		GEN_PSCODE(mapfonts == ENC_LATIN_1	? ps_iso8859_1 :
+			   mapfonts == ENC_LATIN_2	? ps_iso8859_2 :
+			   mapfonts == ENC_LATIN_3	? ps_iso8859_3 :
+			   mapfonts == ENC_LATIN_4	? ps_iso8859_4 :
+			   mapfonts == ENC_CYRILLIC	? ps_iso8859_5 :
+			   /* mapfonts == ENC_ARABIC	? ps_iso8859_6 : */
+			   mapfonts == ENC_GREEK	? ps_iso8859_7 :
+			   /* mapfonts == ENC_HEBREW	? ps_iso8859_8 : */
+			   mapfonts == ENC_LATIN_5	? ps_iso8859_9 :
+			   mapfonts == ENC_LATIN_6	? ps_iso8859_10 :
+			   mapfonts == ENC_THAI		? ps_iso8859_11 :
+			   mapfonts == ENC_LATIN_7	? ps_iso8859_13 :
+			   mapfonts == ENC_LATIN_8	? ps_iso8859_14 :
+			   mapfonts == ENC_LATIN_9	? ps_iso8859_15 :
+			   /* mapfonts == ENC_LATIN_10	? ps_iso8859_16 : */
+			   mapfonts == ENC_KOI8_R	? ps_koi8_r :
+			   mapfonts == ENC_KOI8_U	? ps_koi8_u :
+							  ps_roman8);
 
 		/* boilerplate to remap for 8-bit fonts */
 		GEN_PSCODE(ps_remap);
@@ -1176,6 +1213,7 @@ write_htmlfile()
 
 	/* repeat center footstring (if specified) as heading */
 	if (cfoot[0]) {
+		RESET_DATE();
 		printf("%s", HEADING_PRE);
 		print_html(cfoot);
 		printf("%s\n", HEADING_POST);
@@ -1924,9 +1962,9 @@ print_dates(month, year)
 			else
 				printf("%02d/%02d", day, month);
 #ifdef KEEP_ASTERISKS
-			printf(pd->is_holiday ? "* " : " ");
+			printf(pd->is_holiday ? "*\t" : "\t");
 #else
-			printf(" ");
+			printf("\t");
 #endif
 			this_day = day;
 			RESET_DATE();	/* reset working date */

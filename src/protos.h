@@ -3,16 +3,25 @@
  *
  * Revision history:
  *
- *	4.8.0	B.Marr	2004-12-03	Add prototype for new function
- *					'recalc_paper_parameters()'.
- * 
- *			2004-11-13	Add prototypes for new functions
- *					'do_define_sym_val()',
- *					'find_sym_val()', 'find_fri13th()',
- *					and 'recalc_paper_parameters()'.
- *					Rename 'find_sym()' to
- *					'find_sym_name()' to avoid search
- *					collisions with new function.
+ *	4.9.0
+ *		B.Marr		2005-08-02
+ *		
+ *		Add prototype for new function 'delete_day_info()' and rename
+ *		'enter_date()' to 'process_date()', all based on a patch from
+ *		Bill Bogstad.
+ *
+ *	4.8.0
+ *		B.Marr		2004-12-03
+ *		
+ *		Add prototype for new function 'recalc_paper_parameters()'.
+ *		
+ *		B.Marr		2004-11-13
+ *		
+ *		Add prototypes for new functions 'do_define_sym_val()',
+ *		'find_sym_val()', 'find_fri13th()', and
+ *		'recalc_paper_parameters()'.  Rename 'find_sym()' to
+ *		'find_sym_name()' to avoid search collisions with new
+ *		function.
 
  *	4.7	AWR	06/19/1998	add multiple_months_html() and
  *					single_month_html() (cf. writefil.c)
@@ -149,7 +158,9 @@ int	do_include PROTO((char *path, char *name, int noerr));
 int	do_undef PROTO((char *sym));
 int	enter_day_info PROTO((int m, int d, int y, int text_type,
 			      char **pword));
-int	enter_date PROTO((char **pword, int *ptext_type, char ***pptext));
+int	delete_day_info PROTO((int m, int d, int y, int text_type, 
+			       char **pword));
+int	process_date PROTO((char **pword, int *ptext_type, char ***pptext));
 int	enter_note PROTO((int mm, char **pword, int n));
 int	find_easter PROTO((DATE *pdate));
 #ifdef FRIDAY_13th

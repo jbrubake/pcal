@@ -3,24 +3,35 @@
  *
  * Revision history:
  *
- *	4.8.0	B.Marr	2004-12-05	Fix misleading references to "holiday"
- *					to instead refer to "predefined event"
- *					(i.e. not all pre-defined events are
- *					'holidays').  Create and support
- *					concept of 'input' language versus
- *					'output' language.  Support
- *					specification of paper size via
- *					run-time option (command-line, etc).
- *					Remove spaces embedded within tab
- *					fields. Perform various other cosmetic
- *					and/or comment cleanups.
- * 
- *			2004-11-13	Use new KOI8U mapping for newly-added
- *					Ukrainian language support.  Provide
- *					support for "Friday the 13th" events,
- *					based on a patch from Don Laursen
- *					(donrl at users dot sourceforge dot
- *					net).
+ *	4.9.0
+ *		B.Marr		2005-08-02
+ *		
+ *		Add enumeration for new 'delete' keyword, from Bill Bogstad's
+ *		'event deletion' patch.
+ *		
+ *		B.Marr		2005-01-04
+ *		
+ *		Provide 12 new character encodings (KOI8-R and several 'ISO
+ *		8859-*' encodings) to correspond to new PostScript encoding
+ *		vectors in order to support a wider diversity of languages.
+ *
+ *	4.8.0
+ *		B.Marr		2004-12-05
+ *		
+ *		Fix misleading references to "holiday" to instead refer to
+ *		"predefined event" (i.e. not all pre-defined events are
+ *		'holidays').  Create and support concept of 'input' language
+ *		versus 'output' language.  Support specification of paper size
+ *		via run-time option (command-line, etc).  Remove spaces
+ *		embedded within tab fields. Perform various other cosmetic
+ *		and/or comment cleanups.
+ *		
+ *		B.Marr		2004-11-13
+ *		
+ *		Use new KOI8U mapping for newly-added Ukrainian language
+ *		support.  Provide support for "Friday the 13th" events, based
+ *		on a patch from Don Laursen (donrl at users dot sourceforge
+ *		dot net).
  * 
  *	4.7	AWR	01/25/2000	add SEARCH_PCAL_DIR to control whether
  *					or not Pcal looks for the calendar
@@ -460,6 +471,7 @@
 #define DT_ORDINAL		 8	/* ordinal (first, 1st, ... last) */
 #define DT_WEEKDAY		 9	/* weekday name */
 #define DT_PREDEF_EVENT		10	/* predefined event (often a holiday) */
+#define DT_DELETE		11	/* delete date entry following on this line */
 #define DT_OTHER		-1	/* unrecognizable first token */
 
 /* preposition token codes - cf. get_prep(), pcallang.h */
@@ -614,36 +626,148 @@
 #define PS_RELEASE	"PS-Adobe-1.0"		/* for comments at top */
 #endif
 
-/* if MAPFONTS is defined, generate PostScript code to re-map text fonts (cf.
- * pcalinit.ps) according to either the Roman8, ISO Latin1, Esperanto, or
- * KOI8U definitions of the 8-bit character set.  Note that the overhead to do
- * this slows PostScript down -- especially for small jobs -- so users in
- * English-speaking countries might prefer to leave MAPFONTS undefined.
+/* If 'MAPFONTS' is defined, generate PostScript code to re-map text fonts
+ * (cf. pcalinit.ps) according to the definitions of the specified 8-bit
+ * character set.  Note that the overhead to do this slows PostScript down --
+ * especially for small jobs -- so users in English-speaking countries might
+ * prefer to leave 'MAPFONTS' undefined.
  *
- * Speakers of European languages other than English may select either the
- * Roman8, ISO Latin1, Esperanto, or KOI8U definitions by defining MAPFONTS as
- * ROMAN8, LATIN1, ESPERANTO, or KOI8U (respectively) in the Makefile.
+ * Speakers of languages other than English may select any of the available
+ * remappings by defining 'MAPFONTS' as described in the 'Makefile'.
+ * 
+ * Here's a list of the supported remappings...
+ * 
+ *    Character Encoding	A.K.A.		Regions/Languages
+ *    ----------------------------------------------------------------
+ *					
+ *	ISO 8859-1		Latin1		Western Europe
+ *					
+ *						(e.g. Italian, French, German,
+ *						Spanish, Finnish, Swedish,
+ *						Portuguese, Estonian, Catalan,
+ *						etc)
+ *					
+ *	ISO 8859-2		Latin2		Central European, Slavic
+ *					
+ *						(e.g. Czech, Hungarian)
+ *					
+ *	ISO 8859-3		Latin3		South European, Esperanto, 
+ *						Galician, Maltest, Turkish
+ *					
+ *	ISO 8859-4		Latin4		North European, Old Baltic
+ *					
+ *						(e.g. Latvian, Lithuanian)
+ *					
+ *	ISO 8859-5		Cyrillic	
+ *					
+ *	ISO 8859-7		Greek		Modern Greek
+ *					
+ *	ISO 8859-9		Latin5		Turkish
+ *					
+ *	ISO 8859-10		Latin6		Nordic
+ *					
+ *	ISO 8859-11		Thai		
+ *					
+ *	ISO 8859-13		Latin7		Baltic Rim
+ *					
+ *	ISO 8859-14		Latin8		Celtic
+ *					
+ *	ISO 8859-15		Latin9/Latin0	Western Europe
+ *						(Latin1 + 'Euro' symbol)
+ *					
+ *	KOI8-R					Russian
+ *					
+ *	KOI8-U					Ukrainian
+ *					
+ *	Roman8					
+ *					
  */
 
-#define NOMAP		0		/* no mapping */
-#define ROMAN8		1		/* map to Roman8 */
-#define LATIN1		2		/* map to Latin1 */
-#define ESPERANTO	3		/* map to Esperanto */
-#define KOI8U		4		/* map to KOI8-U */
+/* 
+ * Define enumerations for each of the available character encodings
+ * (mappings).
+ * 
+ * The 'Arabic', 'Hebrew', and 'Latin-10' character encodings are not enabled
+ * because we currently (Aug 2005) have no PostScript encoding vector (see
+ * 'pcalinit.ps') for those character sets.
+ * 
+ * 'ISO 8859-12' is not included because that was a draft for 'Latin-7' that
+ * was never implemented and was therefore skipped.
+ * 
+ */
+#define ENC_NONE 		0	/* no re-mapping */
+#define ENC_LATIN_1		1	/* ISO 8859-1 */
+#define ENC_LATIN_2		2	/* ISO 8859-2 */
+#define ENC_LATIN_3		3	/* ISO 8859-3 */
+#define ENC_LATIN_4		4	/* ISO 8859-4 */
+#define ENC_CYRILLIC		5	/* ISO 8859-5 */
+/* #define ENC_ARABIC		6 */	/* ISO 8859-6 */
+#define ENC_GREEK		7	/* ISO 8859-7 */
+/* #define ENC_HEBREW		8 */	/* ISO 8859-8 */
+#define ENC_LATIN_5		9	/* ISO 8859-9 */
+#define ENC_LATIN_6		10	/* ISO 8859-10 */
+#define ENC_THAI		11	/* ISO 8859-11 */
+#define ENC_LATIN_7		12	/* ISO 8859-13 */
+#define ENC_LATIN_8		13	/* ISO 8859-14 */
+#define ENC_LATIN_9		14	/* ISO 8859-15 */
+/* #define ENC_LATIN_10		15 */	/* ISO 8859-16 */
+#define ENC_KOI8_R		16	/* KOI8-R */
+#define ENC_KOI8_U		17	/* KOI8-U */
+#define ENC_ROMAN8		18	/* Roman8 */
 
-#define MAPPING_R	"Roman8"
-#define MAPPING_L	"Latin1"
-#define MAPPING_E	"Esperanto"
-#define MAPPING_KOI	"koi8u"
+/* 
+ * Define the strings which can be used as values for the '-r' (remap
+ * character set) option.
+ */
+#define MAPPING_LATIN_1		"Latin1"
+#define MAPPING_LATIN_2		"Latin2"
+#define MAPPING_LATIN_3		"Latin3"
+#define MAPPING_LATIN_4		"Latin4"
+#define MAPPING_CYRILLIC	"Cyrillic"
+/* #define MAPPING_ARABIC	"Arabic" */
+#define MAPPING_GREEK		"Greek"
+/* #define MAPPING_HEBREW	"Hebrew" */
+#define MAPPING_LATIN_5		"Latin5"
+#define MAPPING_LATIN_6		"Latin6"
+#define MAPPING_THAI		"Thai"
+#define MAPPING_LATIN_7		"Latin7"
+#define MAPPING_LATIN_8		"Latin8"
+#define MAPPING_LATIN_9		"Latin9"
+/* #define MAPPING_LATIN_10	"Latin10" */
+#define MAPPING_KOI8_R		"KOI8-R"
+#define MAPPING_KOI8_U		"KOI8-U"
+#define MAPPING_ROMAN8		"Roman8"
 
-/* if MAPFONTS is defined in the Makefile, make sure it's correct */
+/* 
+ * If 'MAPFONTS' is defined in the 'Makefile', make sure it's set to one of
+ * the legal values or else invalidate it...
+ */
 #ifdef MAPFONTS
-#if ((MAPFONTS != ROMAN8) && (MAPFONTS != LATIN1) && (MAPFONTS != ESPERANTO) && (MAPFONTS != KOI8U))
+#if	( \
+	(MAPFONTS != ENC_LATIN_1)		&& \
+	(MAPFONTS != ENC_LATIN_2)		&& \
+	(MAPFONTS != ENC_LATIN_3)		&& \
+	(MAPFONTS != ENC_LATIN_4)		&& \
+	(MAPFONTS != ENC_CYRILLIC)		&& \
+	/* (MAPFONTS != ENC_ARABIC)		&& */ \
+	(MAPFONTS != ENC_GREEK)		&& \
+	/* (MAPFONTS != ENC_HEBREW)		&& */ \
+	(MAPFONTS != ENC_LATIN_5)		&& \
+	(MAPFONTS != ENC_LATIN_6)		&& \
+	(MAPFONTS != ENC_THAI)		&& \
+	(MAPFONTS != ENC_LATIN_7)		&& \
+	(MAPFONTS != ENC_LATIN_8)		&& \
+	(MAPFONTS != ENC_LATIN_9)		&& \
+	/* (MAPFONTS != ENC_LATIN_10)	&& */ \
+	(MAPFONTS != ENC_KOI8_R)		&& \
+	(MAPFONTS != ENC_KOI8_U)		&& \
+	(MAPFONTS != ENC_ROMAN8)		\
+	)
 #undef MAPFONTS	
-#define MAPFONTS	NOMAP
+#define MAPFONTS	ENC_NONE
 #endif
 #else
-#define MAPFONTS	NOMAP
+#define MAPFONTS	ENC_NONE
 #endif
 
 /* default font names and sizes (large calendars) */

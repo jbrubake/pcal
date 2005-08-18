@@ -14,7 +14,6 @@
  *		cvt_escape
  *		define_font
  *		define_shading
- *		esperanto_esc
  *		find_executable
  *		getline
  *		html_esc
@@ -31,19 +30,33 @@
  *
  * Revision history:
  *
- *	4.8.0	B.Marr	2004-12-15	Prevent potential buffer overflow 
- *					attack caused by malicious calendar
- *					input file by crudely limiting amount
- *					of data copied in routine 'getline()'.
- *					This security hole was detected by
- *					Danny Lungstrom and reported by
- *					D. J. Bernstein.
+ *	4.9.0
+ *		B.Marr		2005-08-08
+ *		
+ *		Eliminate the hack to support Esperanto via a custom,
+ *		dedicated character encoding.  Esperanto is now handled
+ *		generically by the 'Latin3' (ISO 8859-3) character encoding.
+ *		
+ *		B.Marr		2005-01-24
+ *		
+ *		Fix 'off-by-one' error on buffer overflow fix from v4.8.0.
  * 
- *			2004-11-23	Create and support concept of 'input'
- *					language versus 'output' language.
+ *	4.8.0
+ *		B.Marr		2004-12-15
+ *		
+ *		Prevent potential buffer overflow attack caused by malicious
+ *		calendar input file by crudely limiting amount of data copied
+ *		in routine 'getline()'.  This security hole was detected by
+ *		Danny Lungstrom and reported by D. J. Bernstein.
  * 
- *			2004-11-15	Remove Ctl-L (page eject) characters 
- *					from source file.  
+ *		B.Marr		2004-11-23
+ *		
+ *		Create and support concept of 'input' language versus 'output'
+ *		language.
+ * 
+ *		B.Marr		2004-11-15
+ *		
+ *		Remove Ctl-L (page eject) characters from source file.
  *
  *	4.7	AWR	01/25/2000	revised century() function to fix
  *					Y2K-related problems reported under
@@ -808,38 +821,6 @@ split_date(pstr, pn1, pn2, pn3)
  */
 
 /*
- * esperanto_esc - translate [cCgGhHjHsSuU][xX^] and [uU]~ to ISSO 8859-3
- * equivalents (cf. pcallang.h and pcalutil.ps); fill in value of character
- * and return pointer to last character
- */
-static char *
-#ifdef PROTOS
-esperanto_esc(char *buf,
-	  char *val)
-#else
-esperanto_esc(buf, val)
-	char *buf;
-	char *val;
-#endif
-{
-	char *p;
-	static char *esp_accent = ESP_ACCENT;
-
-	if (((p = strchr(esp_accent, buf[0])) && buf[1]) &&
-            (strchr(ESP_ESCAPE, buf[1]) ||
-	     (TOLOWER(buf[0]) == 'u' && buf[1] == TILDE) )) {
-		*val = ESP_REMAPPING[p - esp_accent];
-		buf++;
-	}
-	else {
-		*val = buf[0];
-	}
-
-	return buf;
-}
-
-
-/*
  * html_esc - recognizes an HTML special character ("&lt;" etc.) and converts
  * it back to its ASCII equivalent; returns pointer to last character in
  * escape sequence (if found) or pointer to original input character
@@ -995,9 +976,6 @@ cvt_escape(obuf, ibuf)
 		 *    \f[PR] is converted to the previous "</[BI]>";
 		 *    <[BI]> and </[BI]> are copied intact
 		 */
-		if (output_language == LANG_ESPERANTO && output_type == OUTPUT_PS) {
-			pi = esperanto_esc(pi, &c);
-		}
 		if (c == '\\') {
 			c2 = *++pi;
 			if (isspace(c2) || strchr(whitespace, c2)) {
@@ -1130,7 +1108,7 @@ getline(fp, buf, pline)
 			 * Crudely prevent buffer overflow to prevent exploit
 			 * by malicious calendar input file.
 			 */
-			if ((cp - tmpbuf) < LINSIZ) *cp++ = c;
+			if ((cp - tmpbuf) < (LINSIZ - 1)) *cp++ = c;
 			else return FALSE;
 		}
 
