@@ -1,4 +1,4 @@
-static char  VERSION_STRING[]	= "@(#)pcal v4.9.0 - generate PostScript calendars";
+static char  VERSION_STRING[]	= "@(#)pcal v4.9.1 - generate PostScript calendars";
 /*
  * pcal.c - generate PostScript file to print calendar for any month and year
  *
@@ -37,6 +37,11 @@ static char  VERSION_STRING[]	= "@(#)pcal v4.9.0 - generate PostScript calendars
  *
  * Revision history:
  *
+ *	4.9.1
+ *		B.Marr		2005-08-24
+ *		
+ *		Update version number in version string.
+ *		
  *	4.9.0
  *		B.Marr		2005-08-08
  *		
