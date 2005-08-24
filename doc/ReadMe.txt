@@ -127,6 +127,29 @@ Building 'pcal':
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
+"Pcal" Version 4.9.1
+
+   This release of 'pcal' includes no new functionality.  It contains only a
+   simple bug fix.
+
+   Major changes:
+
+      1) Bug fixes:
+   
+         - Fixed a bug which inadvertently slipped into the 4.9.0 release at
+           the last minute.
+
+           This bug is only encountered when building for the Unix/Linux,
+           OS/2, or DOS+DJGPP environments (i.e. when using the 'Makefile'
+           file).  It causes a syntax error if you attempt to install 'pcal'
+           using the 'make install' command.
+
+   Bill Marr (marr99@users.sourceforge.net) 
+   24 Aug 2005
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
 "Pcal" Version 4.9.0
 
    This release of 'pcal' includes additional functionality, some bug fixes,

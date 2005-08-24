@@ -10,6 +10,12 @@
 .\"    
 .\" Revision History:
 .\"
+.\" 4.9.1
+.\"     
+.\"    2005-08-24 -- changes by Bill Marr (marr99@users.sourceforge.net): 
+.\"    
+.\"       Update version number and date.
+.\"       
 .\" 4.9.0
 .\"     
 .\"    2005-08-10 -- changes by Bill Marr (marr99@users.sourceforge.net): 
@@ -164,7 +170,7 @@
 .\"       this manual page easier to read.
 .\"    
 .\" 
-.TH PCAL 1 "18 Aug 2005" "Version 4.9.0" "USER COMMANDS"
+.TH PCAL 1 "24 Aug 2005" "Version 4.9.1" "USER COMMANDS"
 .SH NAME
 pcal \- generate PostScript (or HTML) calendars
 .SH SYNOPSIS
