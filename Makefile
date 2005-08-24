@@ -10,6 +10,10 @@
 #    DOS+DJGPP: make OS=DJGPP
 # 
 # 
+# v4.9.1: 
+#    
+#    Fix syntax which causes error when using 'make install' command.
+#    
 # v4.9.0: 
 #    
 #    Add comments for new 'MAPFONTS' options to control PostScript character
@@ -58,7 +62,7 @@
 #       "make fresh" rebuilds from scratch
 #
 
-VERSION  = 4.9.0
+VERSION  = 4.9.1
 
 # 
 # Depending on whether we're compiling for Unix, OS/2, or DOS/DJGPP, use
@@ -338,8 +342,8 @@ man:	$(DOCDIR)/pcal.man
 install:	$(EXECDIR)/$(PCAL) man
 	cp $(EXECDIR)/$(PCAL) $(BINDIR)
 	if [ -d $(MANDIR) ]; then \
-		cp $(DOCDIR)/pcal.man $(MANDIR)/pcal.1
-		$(PACK) $(MANDIR)/pcal.1
+		cp $(DOCDIR)/pcal.man $(MANDIR)/pcal.1;	\
+		$(PACK) $(MANDIR)/pcal.1;		\
 	fi
 	if [ -d $(CATDIR) ]; then \
 		cp $(DOCDIR)/pcal.cat $(CATDIR)/pcal.1; \
