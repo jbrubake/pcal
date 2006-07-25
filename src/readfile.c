@@ -165,7 +165,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "pcal.h"
+#include "pcaldefs.h"
 #include "pcallang.h"
 #include "protos.h"
 

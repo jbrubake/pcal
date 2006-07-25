@@ -142,7 +142,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "pcal.h"
+#include "pcaldefs.h"
 #include "pcallang.h"
 #include "protos.h"
 

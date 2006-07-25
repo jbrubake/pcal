@@ -107,7 +107,7 @@
 #include <ctype.h>
 #include <math.h>
 
-#include "pcal.h"
+#include "pcaldefs.h"
 #include "pcallang.h"
 #include "protos.h"
 

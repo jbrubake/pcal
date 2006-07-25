@@ -320,7 +320,7 @@ static char  VERSION_STRING[]	= "@(#)pcal v4.10.0 - generate PostScript calendar
 #include <time.h>
 #include <string.h>
 
-#include "pcal.h"
+#include "pcaldefs.h"
 #include "pcallang.h"
 #include "protos.h"
 

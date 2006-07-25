@@ -286,16 +286,16 @@ $(OBJDIR)/encvec.o:	$(SRCDIR)/encvec.c
 	$(CC) $(CFLAGS) $(COPTS) -o $@ -c $(SRCDIR)/encvec.c
 
 $(OBJDIR)/exprpars.o:	$(SRCDIR)/exprpars.c $(SRCDIR)/pcaldefs.h \
-			$(SRCDIR)/pcal.h $(SRCDIR)/protos.h
+			$(SRCDIR)/protos.h
 	$(CC) $(CFLAGS) $(COPTS) -o $@ -c $(SRCDIR)/exprpars.c
 
 $(OBJDIR)/moonphas.o:	$(SRCDIR)/moonphas.c $(SRCDIR)/pcaldefs.h \
-			$(SRCDIR)/pcal.h $(SRCDIR)/pcallang.h \
+			$(SRCDIR)/pcallang.h \
 			$(SRCDIR)/protos.h
 	$(CC) $(CFLAGS) $(COPTS) -o $@ -c $(SRCDIR)/moonphas.c
 
 $(OBJDIR)/pcal.o:	$(SRCDIR)/pcal.c $(SRCDIR)/pcaldefs.h \
-			$(SRCDIR)/pcal.h $(SRCDIR)/pcallang.h \
+			$(SRCDIR)/pcallang.h \
 			$(SRCDIR)/protos.h
 	$(CC) $(CFLAGS) $(COPTS) -o $@ -c $(SRCDIR)/pcal.c
 
@@ -304,17 +304,17 @@ $(OBJDIR)/pcallang.o:	$(SRCDIR)/pcallang.c $(SRCDIR)/pcallang.h \
 	$(CC) $(CFLAGS) $(COPTS) -o $@ -c $(SRCDIR)/pcallang.c
 
 $(OBJDIR)/pcalutil.o:	$(SRCDIR)/pcalutil.c $(SRCDIR)/pcaldefs.h \
-			$(SRCDIR)/pcal.h $(SRCDIR)/pcallang.h \
+			$(SRCDIR)/pcallang.h \
 			$(SRCDIR)/protos.h
 	$(CC) $(CFLAGS) $(COPTS) -o $@ -c $(SRCDIR)/pcalutil.c
 
 $(OBJDIR)/readfile.o:	$(SRCDIR)/readfile.c $(SRCDIR)/pcaldefs.h \
-			$(SRCDIR)/pcal.h $(SRCDIR)/pcallang.h \
+			$(SRCDIR)/pcallang.h \
 			$(SRCDIR)/protos.h
 	$(CC) $(CFLAGS) $(COPTS) -o $@ -c $(SRCDIR)/readfile.c
 
 $(OBJDIR)/writefil.o:	$(SRCDIR)/writefil.c $(SRCDIR)/pcaldefs.h \
-			$(SRCDIR)/pcal.h $(SRCDIR)/pcallang.h \
+			$(SRCDIR)/pcallang.h \
 			$(SRCDIR)/protos.h 
 	$(CC) $(CFLAGS) $(COPTS) -o $@ -c $(SRCDIR)/writefil.c
 

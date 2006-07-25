@@ -62,7 +62,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "pcal.h"
+#include "pcaldefs.h"
 #include "protos.h"
 
 /* ---------------------------------------------------------------------------
