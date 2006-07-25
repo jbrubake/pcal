@@ -8,6 +8,15 @@
  *
  * Revision history:
  *
+ *	4.10.0
+ *		B.Marr		2006-07-12
+ *		
+ *		Drop support for obsolete platforms (Amiga, VMS, OS/2).
+ *		
+ *		Get rid of all the '#ifdef PROTOS' checks, which are pretty
+ *		much obsolete these days and just needlessly clutter up the
+ *		code.
+ *		
  *	4.8.0	B.Marr	2004-11-15	Remove Ctl-L (page eject) characters 
  *					from source file.  Remove spaces
  *					embedded within tab fields.
@@ -43,16 +52,13 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#if defined(__STDC__) || defined(STDLIB)
+/// #if defined(__STDC__) || defined(STDLIB)
+/// #include <stdlib.h>
+/// #endif
 #include <stdlib.h>
-#endif
 
 #ifndef SEEK_SET		/* symbolic definition for fseek() */
 #define SEEK_SET	0
-#endif
-
-#if !defined(PROTOS) && (defined(__STDC__) || defined(AMIGA))
-#define PROTOS
 #endif
 
 #define FALSE	0
@@ -78,13 +84,7 @@
  * strip_white: strip leading and trailing whitespace from 'string'; return
  * pointer to first non-whitespace character
  */
-char *
-#ifdef PROTOS
-strip_white(char *string)
-#else
-strip_white(string)
-	char *string;
-#endif
+char * strip_white (char *string)
 {
     int n;
     for (; IS_WHITESPACE(*string); string++)
@@ -100,13 +100,7 @@ strip_white(string)
  * strip_comment: strip comment (unless denoted by "%%") and any preceding
  * whitespace from 'string'; return pointer to 'string'
  */
-char *
-#ifdef PROTOS
-strip_comment(char *string)
-#else
-strip_comment(string)
-	char *string;
-#endif
+char * strip_comment (char *string)
 {
     char *p;
     if ((p = strchr(string, '%')) != NULL) {
@@ -126,14 +120,7 @@ strip_comment(string)
  * escape: copy string 'in' to string 'out', escaping the characters \ and ";
  * return pointer to 'out'
  */
-char *
-#ifdef PROTOS
-escape(char *out,
-       char *in)
-#else
-escape(out, in)
-	char *out, *in;
-#endif
+char * escape (char *out, char *in)
 {
    char c, *sv_out = out;
 
@@ -146,15 +133,7 @@ escape(out, in)
 }
 
 
-int
-#ifdef PROTOS
-main(int argc,
-     char *argv[])
-#else
-main(argc, argv)
-	int argc;
-	char *argv[];
-#endif
+int main (int argc, char *argv[])
 {
     FILE *in, *out;
     char line[256], line2[512], *L, *array, *p, blockname[80];

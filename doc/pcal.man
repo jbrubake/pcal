@@ -10,6 +10,40 @@
 .\"    
 .\" Revision History:
 .\"
+.\" 4.10.0
+.\"     
+.\"    2006-07-12 -- changes by Bill Marr (marr99@users.sourceforge.net): 
+.\"    
+.\"       Update version number and date.
+.\"       
+.\"       Describe newly-added languages: Polish, Dutch, Romanian, and Danish
+.\"       
+.\"       Update 'AUTHORS' credits list.
+.\"       
+.\"       Expand the comments on the use of the time-zone option ('-z'). Also,
+.\"       make it clear that fractional values are allowed for the timezone 
+.\"       value specification.
+.\"       
+.\"       Make note of the options/values which can be specified
+.\"       semi-permanently via the makefile.
+.\"       
+.\"       Clarify interpretation of 1-digit or 2-digit specification of the year.
+.\"       
+.\"       Add a link to the website where 'pcal' (and 'lcal') can be found.
+.\"       
+.\"       Add a link to the website where the 'bsdmainutils' package (with the
+.\"       old Unix/BSD 'calendar' program) can be found.
+.\"       
+.\"       Remove now-obsolete comment about having to comment out the
+.\"       'showpage' command in EPS image files.  This only applied to
+.\"       'pcal' version 4.8.0.
+.\"       
+.\"       Clarify 'character remapping' and 'font use' comments in the '-a'
+.\"       option description section.  Mention a useful website that discusses
+.\"       Greek fonts. 
+.\"       
+.\"       Update date in reference to Adobe website.
+.\"       
 .\" 4.9.1
 .\"     
 .\"    2005-08-24 -- changes by Bill Marr (marr99@users.sourceforge.net): 
@@ -170,7 +204,7 @@
 .\"       this manual page easier to read.
 .\"    
 .\" 
-.TH PCAL 1 "24 Aug 2005" "Version 4.9.1" "USER COMMANDS"
+.TH PCAL 1 "22 Jul 2006" "Version 4.10.0" "USER COMMANDS"
 .SH NAME
 pcal \- generate PostScript (or HTML) calendars
 .SH SYNOPSIS
@@ -234,9 +268,10 @@ if provided, should be numeric.  The
 .BR month
 value should be in the range 1 \- 12, and the 
 .BR year
-value should be specified as 1 or 2 digits or as the full 4-digit year.
-If no numeric arguments are provided, the calendar for the current month
-and year will be generated.
+value should be specified as 1 or 2 digits (in which case it will be
+interpreted as that year in the current century) or as the full 4-digit year.
+If no numeric arguments are provided, the calendar for the current month and
+year will be generated.
 .PP
 If one numeric argument is provided, it is interpreted as the
 .BR year
@@ -921,21 +956,10 @@ Unfortunately, most EPS images cannot be used directly by
 
 .RS
 .LP
-In the older 4.8.0 release of
-.IR pcal
-(which was the first release to offer EPS image capability), you had to remove
-or comment out the PostScript `showpage' command near the end of the EPS image
-file.  If you failed to do this, the calendar would be printed immediately (or
-displayed immediately, if previewing on-screen) after encountering the EPS
-image, prior to completion of the processing of the rest of the EPS images for
-that month!
-.B Fortunately, this restriction was removed in the 4.9.0 release of
-.IR pcal .
-.PP
-Furthermore, depending on the EPS image used and how it was created, you may
-have to remove or comment out some or all of the PostScript `translate'
-commands, in order to avoid the use of illogical X-delta and Y-delta values
-when specifying the EPS image in your
+Depending on the EPS image used and how it was created, you may have to remove
+or comment out some or all of the PostScript `translate' commands, in order to
+avoid the use of illogical X-delta and Y-delta values when specifying the EPS
+image in your
 .I pcal
 date file. Most programs that generate EPS output (either directly or via
 conversion from some other graphic format) seem to have these `translate'
@@ -1432,6 +1456,9 @@ day boxes.  For use with color printers, these values may optionally be
 specified as a set of \fIred\fP:\fIgreen\fP:\fIblue\fP (RGB) values, each of
 which must in the range 0.0 through 1.0.  At least one `:' must be present for
 these values to be recognized as RGB colors; omitted values are set to 0.0.
+.IP
+This option may also be set semi-permanently by altering the makefile
+(`Makefile' for most environments, 'Makefile.DOS' for MS-DOS).
 .TP
 .BI \-F " day"
 Selects weekday
@@ -1439,6 +1466,9 @@ Selects weekday
 as the first day of the week.  The given day will appear in the left-most
 column of the calendar.  \fIday\fP may be specified either as a weekday
 name or, optionally, as a number in the range 0 (Sunday) through 6 (Saturday).
+.IP
+This option may also be set semi-permanently by altering the makefile
+(`Makefile' for most environments, 'Makefile.DOS' for MS-DOS).
 .TP
 .B \-A
 Directs
@@ -1448,6 +1478,9 @@ to use American date conventions (
 and
 .B month dd
 ) when parsing the date file.  This is the default.
+.IP
+This option may also be set semi-permanently by altering the makefile
+(`Makefile' for most environments, 'Makefile.DOS' for MS-DOS).
 .TP
 .B \-E
 Directs
@@ -1457,6 +1490,9 @@ to use European date conventions (
 and
 .B dd month
 ) when parsing the date file.
+.IP
+This option may also be set semi-permanently by altering the makefile
+(`Makefile' for most environments, 'Makefile.DOS' for MS-DOS).
 .TP
 .BI \-X " xtrans"
 Specifies the x-axis translation value for positioning the output on the
@@ -1505,6 +1541,9 @@ changes the point size to 54 without affecting the font name.
 Note: For yearly calendars, any specification of font 
 .I size
 is ignored.
+.IP
+This option may also be set semi-permanently by altering the makefile
+(`Makefile' for most environments, 'Makefile.DOS' for MS-DOS).
 .TP
 .BI \-d " \fR[\fIdate_font\fR][\fB/\fIsize\fR]"
 Similar to the
@@ -1515,6 +1554,9 @@ numbers inside the box for each day).
 Note: For yearly calendars, any specification of font 
 .I size
 is ignored.
+.IP
+This option may also be set semi-permanently by altering the makefile
+(`Makefile' for most environments, 'Makefile.DOS' for MS-DOS).
 .TP
 .BI \-n " \fR[\fItext_font\fR][\fB/\fIsize\fR]"
 Similar to the
@@ -1526,6 +1568,9 @@ with each day and for any text in the monthly ``Notes'' box.
 .IP
 Note: This option applies to monthly calendars only. For yearly calendars,
 this option does not apply.
+.IP
+This option may also be set semi-permanently by altering the makefile
+(`Makefile' for most environments, 'Makefile.DOS' for MS-DOS).
 .TP
 .BI \-L " string"
 Causes the accompanying string to be printed as a left-justified footer.
@@ -1651,6 +1696,14 @@ calculations, adjusting the phase by
 hours (where
 .I time_zone
 is expressed in hours west of UTC).
+.IP
+For example, New York residents (USA Eastern time zone) would use '-z 5' while
+on Eastern Standard Time (winter) and '-z 4' while on Eastern Daylight Time
+(summer).  People in India would use '-z-5.5'.  Notice that fractional values
+are allowed.
+.IP
+This option may also be set semi-permanently by altering the makefile
+(`Makefile' for most environments, 'Makefile.DOS' for MS-DOS).
 .TP
 .B \-h
 Causes
@@ -1685,6 +1738,8 @@ Currently, the following languages are supported:
 (Catalan),
 .B cs
 (Czech),
+.B da
+(Danish),
 .B de
 (German),
 .B el
@@ -1709,8 +1764,14 @@ Currently, the following languages are supported:
 (Lithuanian),
 .B lv
 (Latvian),
+.B nl
+(Dutch),
+.B pl
+(Polish),
 .B pt
 (Portuguese),
+.B ro
+(Romanian),
 .B ru
 (Russian),
 .B sv
@@ -1731,13 +1792,22 @@ directive).  See the section
 for more details on specifying the `input language'.
 .IP
 .B "Note:"
-In order to display diacritical marks, languages other than English
-require that the fonts be remapped (typically via the "Latin1"
-remapping).  If no remapping is specified, \fIpcal\fP selects a remapping
-appropriate to the selected language; note that the Greek language also
-requires an ELOT-928 font (available from ah@doc.ic.ac.uk).  Also see the
-.BR \-r " and " \-t
-options.
+In order to display diacritical marks, languages other than English require
+that the characters be remapped.  Normally, no action is required since
+\fIpcal\fP automatically selects a remapping which is appropriate to the
+selected language.  However, if you want to override the default remapping for
+a given language, you would use the
+.BR \-r
+option (e.g. "-r Latin1").
+.IP
+Furthermore, an appropriate font should be selected as needed using the
+.BR \-t
+option (e.g. "-t some-latin1-font-name").  Any language using the "Latin1"
+remapping (e.g. French, German, Italian, Spanish, etc) requires an ISO 8859-1
+('Latin1') font.  The Greek language requires an ISO 8859-7 (similar to
+ELOT-928) font (available from Angelo Haritsis <ah@doc.ic.ac.uk>; also see
+http://www.hellenic.net/fonts/).  Similarly, Russian requires a KOI8-R font
+while Ukrainian requires a KOI8-U font.
 .IP
 .I Pcal
 predefines the symbol \fBlang_XX\fP, where \fBXX\fP is the two-character
@@ -1802,6 +1872,10 @@ of the following:
 .RE
 .RE
 .LP
+
+.IP
+This option may also be set semi-permanently by altering the makefile
+(`Makefile' for most environments, 'Makefile.DOS' for MS-DOS).
 
 .TP
 .BR \-T " [B|I|R]"
@@ -1988,13 +2062,34 @@ line in the date file.
 .\" ------------------------------------------------------------------
 
 .SH SEE ALSO
+Website for
+.I pcal
+and
+.I lcal
+(a lunar calendar generation application):
+.PP
+.IP
+http://pcal.sourceforge.net
+.PP
 cal(1),
 calendar(1).
+.PP
+The old, simple Unix/BSD 'calendar' program, which can be used with
+.I pcal
+and the '-c' option is part of the BSD Main Utilities
+('bsdmainutils') package and is available at the Debian site:
+.RS
+.LP
+.IR http://packages.debian.org/stable/source/bsdmainutils
+.RE
+.LP
+This old program does not seem to be included with most GNU/Linux
+distributions these days.
 .PP
 For more information on PostScript, consult the free, online Adobe book
 entitled
 .IR "PostScript Language Reference Manual" , 
-which can be found here (as of Aug 2005):
+which can be found here (as of Jul 2006):
 .RS
 .LP
 .IR http://partners.adobe.com/public/developer/ps/index_specs.html
@@ -2023,4 +2118,6 @@ Angelo Haritsis.  Additional languages were added by Andrew Rogers
 (Esperanto), Lars Wirzenius (Finnish), Pedro Zorzenon Neto (Portuguese), Joel
 Fredrikson (Swedish), Volodymyr M. Lisivka (Ukrainian), Neeme Praks (Estonian,
 Russian, Latvian, Lithuanian), Peter Cernoch (Czech), Ferenc Kruzslicz
-(Hungarian), and Carles Sadurní Anguita (Catalan).
+(Hungarian), Carles Sadurní Anguita (Catalan), Dominik 'Chiron' Derlatka
+(Polish), Ewald Beekman (Dutch), Claudiu Costin (Romanian), and Kenneth
+Geisshirt (Danish).

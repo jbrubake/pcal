@@ -3,6 +3,15 @@
  *
  * Revision history:
  *
+ *	4.10.0
+ *		B.Marr		2006-07-12
+ *		
+ *		Various cleanups.
+ *		
+ *		Get rid of all the '#ifdef PROTOS' checks, which are pretty
+ *		much obsolete these days and just needlessly clutter up the
+ *		code.
+ *		
  *	4.8.0	B.Marr	2004-12-04	Create separate variables for X/Y 
  *					scaling and X/Y translation done by
  *					the program to distinguish from the
@@ -81,11 +90,7 @@ char month_len[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 short month_off[12] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
 
 /* dispatch table for wildcard matching routines - cf. pcaldefs.h */
-#ifdef PROTOS
-int (*pdatefcn[])(int, int, int) = {
-#else
-int (*pdatefcn[])() = {
-#endif
+int (*pdatefcn[]) (int, int, int) = {
 	is_anyday, is_weekday, is_workday, is_holiday, not_weekday, not_workday,
 	not_holiday, is_newmoon, is_firstq, is_fullmoon, is_lastq
 	};
@@ -148,7 +153,6 @@ int prev_cal_box[4] = PREV_CAL_BOX;
 int next_cal_box[4] = NEXT_CAL_BOX;
 
 char time_zone[STRSIZ] = TIMEZONE;	/* -z */
-double utc_offset;
 int tz_flag = FALSE;
 
 int debug_flags = 0;			/* -Z */
@@ -181,11 +185,7 @@ extern char month_len[];
 extern short month_off[];
 
 /* dispatch functions and table for wildcard processing */
-#ifdef PROTOS
 extern int (*pdatefcn[])(int, int, int);
-#else
-extern int (*pdatefcn[])(); 
-#endif
 
 /*
  * Default values for command-line options:
@@ -245,7 +245,6 @@ extern int prev_cal_box[];
 extern int next_cal_box[];
 
 extern char time_zone[];		/* -z */
-extern double utc_offset;
 extern int tz_flag;
 
 extern int debug_flags;			/* -Z */
