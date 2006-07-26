@@ -10,11 +10,11 @@ Overview:
       - Unix (including GNU/Linux)
       - DOS (including DOS running under Windows)
       - DOS + DJGPP
-      - Windows + Cygwin
+      - DOS/Windows + Cygwin
 
    Historically, 'pcal' was supported on other platforms as well, but
-   beginning with version 4.10.0, support for these platforms has been dropped
-   (and the associated build files moved to the 'doc/obsolete' directory):
+   beginning with version 4.10.0, support for these platforms has been
+   dropped:
 
       - OS/2
       - Vax/VMS
@@ -93,14 +93,15 @@ Overview:
    
       http://sourceforge.net/projects/pcal/
 
-   Guidelines for Application Maintainers: (at end of this file)
+   A section entitled "Guidelines for Application Maintainers" can be found at
+   end of this file.
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
 Building 'pcal':
 
-   Unix/Linux:
+   Unix/Linux (or DOS/Windows + Cygwin):
 
       make
       make install  (as 'root' user)
@@ -131,30 +132,135 @@ Building 'pcal':
 
       1) New functionality:
 
-         - 
+         - Support for the following languages has been added:
 
-      1) Bug fixes:
+             - Danish ("-a da")
+             - Dutch ("-a nl")
+             - Polish ("-a pl")
+             - Romanian ("-a ro")
+
+      2) Removed functionality:
+
+         - Support for the OS/2, Amiga, and Vax/VMS platforms has been
+           removed.
+
+           These platforms are essentially obsolete and the files and code
+           needed to accommodate these platforms was cluttering things up and
+           interfering with further progress by needlessly complicating the
+           code.
+
+           Anyone needing support for these platforms is advised to continue
+           using the 4.9.1 release of 'pcal'.
+
+      3) Bug fixes:
    
-         - Fixed a bug ...
+         - Fixed a couple of long-standing, recently-uncovered bugs in the use
+           of the timezone ('-z') option, which is used in the 'moon phase'
+           calculations:
 
-      2) New date file functionality:
+              (1) Negative timezone arguments, used for areas east of
+                  (i.e. later than) UTC/Greenwich (e.g. '-z-5'), were not
+                  being processed correctly. (They were erroneously adjusted
+                  by adding a full 24 hours to make them positive.) 
 
-      3) Other changes:
+                  Thanks to Lalit Chhabra for reporting this bug.
+   
+              (2) The user-specified timezone offset was being normalized to
+                  +/- 12 hours. 
+
+                  Although this works for the vast majority of users, there
+                  are places in the world which are outside that range. For
+                  example, Christmas Island (aka 'Kiritimati', in the Pacific
+                  Ocean) is in the UTC+14 timezone. The local time there is 14
+                  hours ahead of UTC, so the 'pcal' option would be
+                  '-z-14'. Obviously, with such places in the world, we can no
+                  longer normalize the user-specified timezone offset to +/-
+                  12 hours.
+
+         - Fixed a problem whereby certain installations of Cygwin were unable
+           to compile 'pcal', due to a namespace collision between the
+           'getline()' routine in 'pcal' and the standard C library function
+           'getline()'.
+
+           Thanks to Daniela ('Dani') Duerbeck for reporting this.
+
+         - Worked around a problem whereby a 'segmentation fault' crash can
+           occur when a single entry in the 'pcal' configuration file has more
+           than 100 'words' defining an event. Thanks to Eric Herrera for the
+           crash report.
+
+           For now, the limit has been increased from from 100 to 300, which
+           should solve the problem for the vast majority of 'pcal' users.
+
+      4) Other changes:
+
+         - Eliminated certain compile-time warnings that occur in a "GCC 3.4.2
+           + Solaris" build environment, thanks to a report from David Mathog.
+
+           This involved adding a bunch casting operations to the argument of
+           certain function calls like 'isdigit()' and 'islower()'.
+
+         - Eliminated the voluminous description of the syntax and operations
+           for the 'pcal' configuration file from the 'pcal -h' output,
+           leaving just the detailed description of the command-line
+           parameters.
+
+           The long description of the use of 'pcal' configuration file was
+           somewhat out-of-date and basically just (badly) duplicated the
+           content of the 'man pcal' page (or its HTML, PostScript, or ASCII
+           equivalent file).
+
+           The 'man pcal' page should be treated as the authoritative
+           reference for detailed aspects of 'pcal' operation.
 
       5) Documentation changes:
+
+         - Added a new section ("Guidelines for Application Maintainers") to
+           the end of this file.  
+
+           It's intended to document the necessary process of releasing a new
+           version of 'pcal' and/or 'lcal'.
    
       6) Of interest to 'pcal' hackers and installers:
 
+         - Made a major change to 'pcal' design.
 
+           Previously, the PostScript output was generated in part using an
+           external program ('pcalinit[.c]') which read the PostScript
+           template file ('pcalinit.ps') and automatically generated a C
+           header file ('pcalinit.h').
 
-   - Renamed the 'Makefile' flag 'EPS' to 'EPS_DSC' in order to more clearly
-     show its purpose (i.e. to use different PostScript Document Structuring
-     Conventions [DSC]) and to avoid confusion with the embedded EPS image
-     capability for monthly calendars.
+           This old method had a few disadvantages:
 
-   - Eliminate redundant, somewhat-outdated 'pcal -h' output. 
+              (1) The PostScript output that it generated was ugly, with no
+                  whitespace (vertically or horizontally) and devoid of
+                  comments that were part of the PostScript template file.
 
+                  This made reading the PostScript much harder.
 
+              (2) It was harder to take advantage of patterns in the
+                  PostScript output, causing redundancy.
+
+              (3) It was harder to compile (especially as the size of the
+                  PostScript template file grew) under limited environments,
+                  like DOS.
+
+           The new method generates all the PostScript output using C code
+           only.  
+
+           Minor optimizations in the code can be made this way, without
+           needlessly replicating similar chunks of PostScript code.  This
+           puts some of the logic behind the PostScript output back into C
+           code, where it's easier to see what's happening.
+
+           In truth, this change was first made (recently) to the 'lcal'
+           application, where the inefficiencies are greater.  Logically,
+           however, 'pcal' benefitted from the same change.
+
+         - Renamed the 'Makefile' flag 'EPS' to 'EPS_DSC' in order to more
+           clearly show its purpose (i.e. to use different PostScript Document
+           Structuring Conventions [DSC]) and to avoid confusion with the
+           embedded EPS image capability for monthly calendars.
 
    Credits:
    
@@ -162,22 +268,13 @@ Building 'pcal':
       and Pipeline Associates, Inc. with permission to modify and
       redistribute.
    
-      FIXME: FIXME: FIXME: FIXME: FIXME: 
-      FIXME: FIXME: FIXME: FIXME: FIXME: 
-      FIXME: FIXME: FIXME: FIXME: FIXME: 
-      FIXME: FIXME: FIXME: FIXME: FIXME: 
-
       The following people contributed to Pcal v4.10.0:
 
-         Bug fixes, 12 new character encodings,
-            language support, various other fixes:	Bill Marr
-         Event deletion capability:			Bill Bogstad
-         Czech language support:			Peter Cernoch
-         Hungarian language support:			Ferenc Kruzslicz
-         Catalan language support:			Carles Sadurní Anguita
-         Perl script for HTML/CGI:			David Mathog
-         US example calendar:				J. Rhett Hooper
-         DOS/DJGPP build fix/support:			Thiago F.G. Albuquerque
+         Bug fixes, various other fixes:		Bill Marr
+         Polish language support:			Dominik 'Chiron' Derlatka
+         Dutch language support:			Ewald Beekman
+         Romanian language support:			Claudiu Costin
+         Danish language support:			Kenneth Geisshirt
 
       For a list of all known contributors to date, see the 'Authors' section
       of the 'man' page.
@@ -2018,14 +2115,19 @@ Guidelines for Application Maintainers:
    Here are some guidelines that may be helpful for future maintainers of
    'pcal' and/or 'lcal'.
 
+   In the descriptions below, substitute 'lcal' for 'pcal' as needed.
 
    Just before the new release:
 
       - Update all references to the release version and date in these files:
 
            - 'pcal.c'
-
            - 'pcal.man'
+
+        and/or
+
+           - 'lcal.c'
+           - 'lcal.man'
 
       - Generate the alternate-format help files:
 
@@ -2033,36 +2135,61 @@ Guidelines for Application Maintainers:
            'pcal-help.html' -- HTML
            'pcal-help.txt' -- ASCII text
 
-
-        They were generated prior to the release of
-        'pcal' with these commands (on Unix-like systems):
+        These files can be generated with these commands (on Unix-like
+        systems):
 
            groff -man -Tps pcal.man >pcal-help.ps
            groff -man -Thtml pcal.man >pcal-help.html
            groff -man -Tascii pcal.man >pcal-help.txt
 
-        A simpler way to generate those files is to run 'make man', which
-        should already have been done just prior to the release of a new
-        version of 'pcal'.
+        A simpler way to generate those files is to run 'make man'.
 
+   Making the Release:
+
+      - Copy the 'ReadMe.txt' file to 'ReadMe-x.y.z.txt' (to avoid name
+        collisions on SourceForge's temporary holding directory, which has
+        files from all sorts of SourceForge projects about to be released).
+
+      - Create a tarball ('pcal-x.y.z.tgz') of all the release files,
+        including the 'pcal-help.*' files you created above.
+
+      - Upload both of the files created in the previous steps to the
+        SourceForge temporary holding directory.
+
+      - TBD
 
    Just after the new release:
 
       - Update the SourceForge websites:
 
-           - Add a 'News' item.
-           - 
-           - 
+           - Add a 'News' item to the website, describing the new release.
 
       - Update the FreshMeat site:
 
-           - 
+           - TBD
 
       - Once the new release is available, email any patch contributors as a
         courtesy, especially in case they're not subscribed to the mailing
         list.
 
-      - Send a blurb to LWN for the next weekly news release.
-   
+      - Consider sending an announcement and a description of the new release
+        to the LWN (Linux Weekly News) editor for inclusion in the next weekly
+        news release on 'http://lwn.net'.
+
+        Here's an example of a release description sent to 'lwn@lwn.net',
+        asking for it to be included in the next issue of LWN:
+
+           Version 4.9.0 of `pcal', a program which generates PostScript- or
+           HTML-format monthly/yearly calendars, has been announced
+           (http://pcal.sourceforge.net).  Changes include support for several
+           new languages (and improved support for existing languages),
+           ability to delete specific events, improved EPS image support, a
+           Perl script for HTML/CGI access, additional sample calendar event
+           files, additional sample character encoding/font test files, and
+           various bug fixes.
+
+        Obviously, the text will need to be adjusted for the features of each
+        release, but that should serve as a rough template.
+
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
