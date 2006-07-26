@@ -93,8 +93,10 @@ Overview:
    
       http://sourceforge.net/projects/pcal/
 
-   A section entitled "Guidelines for Application Maintainers" can be found at
-   end of this file.
+   A section entitled "Guidelines for Application Maintainers" can be found
+   here:
+
+      http://pcal.sourceforge.net/maintainers.html
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
@@ -213,15 +215,7 @@ Building 'pcal':
            The 'man pcal' page should be treated as the authoritative
            reference for detailed aspects of 'pcal' operation.
 
-      5) Documentation changes:
-
-         - Added a new section ("Guidelines for Application Maintainers") to
-           the end of this file.  
-
-           It's intended to document the necessary process of releasing a new
-           version of 'pcal' and/or 'lcal'.
-   
-      6) Of interest to 'pcal' hackers and installers:
+      5) Of interest to 'pcal' hackers and installers:
 
          - Made a major change to 'pcal' design.
 
@@ -2103,93 +2097,6 @@ Please retain this README file with the package.
 Ken Keirnan
 Pacific Bell
 San Ramon, CA.
-
------------------------------------------------------------------------------
------------------------------------------------------------------------------
-
-Guidelines for Application Maintainers:
-           
-   Also known as "What to do if the current maintainer is hit by the
-   proverbial bus..." :^)
-
-   Here are some guidelines that may be helpful for future maintainers of
-   'pcal' and/or 'lcal'.
-
-   In the descriptions below, substitute 'lcal' for 'pcal' as needed.
-
-   Just before the new release:
-
-      - Update all references to the release version and date in these files:
-
-           - 'pcal.c'
-           - 'pcal.man'
-
-        and/or
-
-           - 'lcal.c'
-           - 'lcal.man'
-
-      - Generate the alternate-format help files:
-
-           'pcal-help.ps' -- PostScript (nicest to view)
-           'pcal-help.html' -- HTML
-           'pcal-help.txt' -- ASCII text
-
-        These files can be generated with these commands (on Unix-like
-        systems):
-
-           groff -man -Tps pcal.man >pcal-help.ps
-           groff -man -Thtml pcal.man >pcal-help.html
-           groff -man -Tascii pcal.man >pcal-help.txt
-
-        A simpler way to generate those files is to run 'make man'.
-
-   Making the Release:
-
-      - Copy the 'ReadMe.txt' file to 'ReadMe-x.y.z.txt' (to avoid name
-        collisions on SourceForge's temporary holding directory, which has
-        files from all sorts of SourceForge projects about to be released).
-
-      - Create a tarball ('pcal-x.y.z.tgz') of all the release files,
-        including the 'pcal-help.*' files you created above.
-
-      - Upload both of the files created in the previous steps to the
-        SourceForge temporary holding directory.
-
-      - TBD
-
-   Just after the new release:
-
-      - Update the SourceForge websites:
-
-           - Add a 'News' item to the website, describing the new release.
-
-      - Update the FreshMeat site:
-
-           - TBD
-
-      - Once the new release is available, email any patch contributors as a
-        courtesy, especially in case they're not subscribed to the mailing
-        list.
-
-      - Consider sending an announcement and a description of the new release
-        to the LWN (Linux Weekly News) editor for inclusion in the next weekly
-        news release on 'http://lwn.net'.
-
-        Here's an example of a release description sent to 'lwn@lwn.net',
-        asking for it to be included in the next issue of LWN:
-
-           Version 4.9.0 of `pcal', a program which generates PostScript- or
-           HTML-format monthly/yearly calendars, has been announced
-           (http://pcal.sourceforge.net).  Changes include support for several
-           new languages (and improved support for existing languages),
-           ability to delete specific events, improved EPS image support, a
-           Perl script for HTML/CGI access, additional sample calendar event
-           files, additional sample character encoding/font test files, and
-           various bug fixes.
-
-        Obviously, the text will need to be adjusted for the features of each
-        release, but that should serve as a rough template.
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
