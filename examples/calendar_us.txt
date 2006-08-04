@@ -4,9 +4,9 @@
 #   Sources:
 #       http://aa.usno.navy.mil/faq/docs/holidays.html
 #       http://www.smart.net/~mmontes/ushols.html
-#       http://www4.law.cornell.edu/uscode/36/stIpAch1.html
+#       http://www4.law.cornell.edu/uscode/html/uscode36/usc_sup_01_36_06_I_08_A_10_1.html
 #
-# Last modified Tue Aug  3 10:27:32 MDT 2004 by J. Rhett Hooper
+# Originally by J. Rhett Hooper, with minor updates and corrections by Bill Marr
 
 opt -A				# American date format
 
@@ -14,7 +14,7 @@ year all			# Reset the year to wildcard
 
 ##
 ## Federal Holidays
-##   see http://www4.law.cornell.edu/uscode/5/6103.html
+##   see http://www4.law.cornell.edu/uscode/html/uscode05/usc_sec_05_00006103----000-.html
 ##
 Jan 1*				New Year's Day
 Jul 4*				Independence Day
@@ -34,10 +34,11 @@ weekday nearest Dec 25*		# nonworkday in observance of Christmas Day
 # Code specifies the holiday fall on the third Monday in January.  January
 # 15 and the third Monday will only coincide if January 1 is a Monday.
 third Mon in Jan*		Birthday of Martin Luther King, Jr. (observed)
-# George Washington's actual birthdate is January 22, 1731, (January 11,
-# 1731 in the Julian calendar system that was in use at the time) but US
+# George Washington's actual birthdate is February 22, 1732, (February 11,
+# 1732 in the Julian calendar system that was in use at the time) but US
 # Code specifies that the holiday fall on the third Monday in February.
-# January 22 can never be the third Monday.
+# February 22 can never be the third Monday.  This holiday is often referred
+# to as "Presidents' Day" to also honor Abraham Lincoln.
 third Mon in Feb*		Washington's Birthday (observed)
 last Mon in May*		Memorial Day
 first Mon in Sep*		Labor Day
@@ -97,7 +98,7 @@ last Sun in Oct			DST ends (-1h)
 
 ##
 ## Selected Patriotic Observances
-##   See http://www4.law.cornell.edu/uscode/36/stIpAch1.html
+##   See http://www4.law.cornell.edu/uscode/html/uscode36/usc_sup_01_36_06_I_08_A_10_1.html
 ##
 Feb 1				National Freedom Day
 Apr 13				Thomas Jefferson's birthday
