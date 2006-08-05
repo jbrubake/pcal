@@ -266,7 +266,7 @@ Building 'pcal':
 
            In truth, this change was first made (recently) to the 'lcal'
            application, where the inefficiencies are greater.  Logically,
-           however, 'pcal' benefitted from the same change.
+           however, 'pcal' benefited from the same change.
 
          - Renamed the 'Makefile' flag 'EPS' to 'EPS_DSC' in order to more
            clearly show its purpose (i.e. to use different PostScript Document
@@ -291,7 +291,7 @@ Building 'pcal':
       of the 'man' page.
    
    Bill Marr (marr99@users.sourceforge.net) 
-   xx Aug 2006
+   06 Aug 2006
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
