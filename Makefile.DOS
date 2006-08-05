@@ -1,5 +1,5 @@
 # 
-# Makefile for Pcal under MS-DOS
+# Makefile for 'pcal' under MS-DOS
 #
 # v4.10.0: Bill Marr
 #    
@@ -46,11 +46,11 @@
 # Define various directories for the following items:
 # 
 #    - source code
-#    - object code (and compile-time, auto-generated C header files)
+#    - object code
 #    - installed 'pcal' executable
 # 
 # This 'make' file mimics the Unix 'Makefile' file, by defining separate
-# directories for the source, the objects, and the executables.  However,
+# directories for the source, the objects, and the executable.  However,
 # unlike the Unix compilers, the Borland C (DOS) compiler had trouble with
 # creating the objects and executable code in subdirectories, so for now,
 # we're just using the same actual destination directory ('.') for both of
@@ -157,9 +157,6 @@ $(OBJDIR)\writefil.obj:	$(SRCDIR)\writefil.c $(SRCDIR)\pcaldefs.h \
 # 
 clean:
 	del $(OBJDIR)\*.obj
-
-# 	del $(OBJDIR)\pcalinit.h
-# 	del $(EXECDIR)\pcalinit.exe
 
 # 
 # This target will delete everything, including the 'pcal' executable.
