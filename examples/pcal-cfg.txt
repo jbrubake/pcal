@@ -230,6 +230,14 @@ elif lang_hu
    opt -C "Hungarian"
 elif lang_ca
    opt -C "Catalan"
+elif lang_pl
+   opt -C "Polish"
+elif lang_nl
+   opt -C "Dutch"
+elif lang_ro
+   opt -C "Romanian"
+elif lang_da
+   opt -C "Danish"
 endif
 endif
 
