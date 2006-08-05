@@ -294,7 +294,8 @@ static double kepler (double m, double ecc)
  */
 double calc_phase (int month, int inday, int year)
 {
-   double Day, N, M, Ec, Lambdasun, ml, MM, Ev, Ae, A3, MmP, mEc, A4, lP, V, lPP, MoonAge, pdate, moon_phase;
+   double Day, N, M, Ec, Lambdasun, ml, MM;
+   double Ev, Ae, A3, MmP, mEc, A4, lP, V, lPP, MoonAge, pdate, moon_phase;
    static int first = TRUE;
    static double utc_offset_days;
 
@@ -339,6 +340,10 @@ double calc_phase (int month, int inday, int year)
    /*  Moon's mean anomaly. */
    MM = fixangle(ml - 0.1114041 * Day - mmlongp);
    
+   /*  Moon's ascending node mean longitude. */
+   /*  Not used -- commented out. */
+   /* MN = fixangle(mlnode - 0.0529539 * Day); */
+   
    /*  Evection. */
    Ev = 1.2739 * sin(torad(2 * (ml - Lambdasun) - MM));
    
@@ -371,7 +376,10 @@ double calc_phase (int month, int inday, int year)
    /*  Age of the Moon in degrees. */
    MoonAge = lPP - Lambdasun;
    
-   if ((moon_phase = fixangle(MoonAge) / 360.0) < 0.0) moon_phase += 1.0;
+   moon_phase = fixangle(MoonAge) / 360.0;
+   if (moon_phase < 0.0) moon_phase += 1.0;
+
+   /* fprintf(stderr, "Moon phase on %04d-%02d-%02d: %.5lf\n", year, month, inday, moon_phase); */
 
    return (moon_phase);
 }
