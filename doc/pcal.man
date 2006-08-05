@@ -204,7 +204,7 @@
 .\"       this manual page easier to read.
 .\"    
 .\" 
-.TH PCAL 1 "05 Aug 2006" "Version 4.10.0" "USER COMMANDS"
+.TH PCAL 1 "06 Aug 2006" "Version 4.10.0" "USER COMMANDS"
 .SH NAME
 pcal \- generate PostScript (or HTML) calendars
 .SH SYNOPSIS
