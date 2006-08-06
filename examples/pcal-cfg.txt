@@ -9,6 +9,14 @@
 #    
 # Revision History:
 #
+# 4.10.0
+#     
+#    2006-08-05 -- changes by Bill Marr (marr99@users.sourceforge.net):
+#       
+#       Account for the new version number in areas that check it.
+#       
+#       Add 4 new languages.
+#       
 # 4.9.0
 #     
 #    2005-08-10 -- changes by Bill Marr (marr99@users.sourceforge.net):
@@ -152,7 +160,7 @@ May 10 Eric's %-1991Y%oY Birthday
 # moves the EPS image down slightly to leave room for the "Eric's 14th
 # Birthday" text which will appear below the day's numerics.
 # 
-ifdef v4_8_0 | v4_9_0 
+ifdef v4_8_0 | v4_9_0 | v4_9_1 | v4_10_0 
 May 10 image:/path-to-eps/eric.eps 0.50 0.50 0 -8
 endif
 
@@ -348,7 +356,7 @@ every Wed in all		%A poker game
 # 2nd Thursday of any given month.
 # 
 all Thursday in all		%A golf game
-ifdef v4_9_0
+ifdef v4_9_0 | v4_9_1 | v4_10_0 
 delete second Thursday in all	%A golf game
 endif
 
