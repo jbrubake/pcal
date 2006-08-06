@@ -141,7 +141,7 @@ Building 'pcal':
                - Polish ("-a pl")
                - Romanian ("-a ro")
 
-           Thanks to Kenneth Geisshirt, a new calendar configuration file with
+           Thanks to Ewald Beekman, a new calendar configuration file with
            Dutch holidays ('calendar_nl.txt') is included in the 'examples'
            directory.
 
