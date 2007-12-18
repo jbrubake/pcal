@@ -8,9 +8,17 @@ Overview:
    Currently, 'pcal' is supported on the following platforms:
 
       - Unix (including GNU/Linux)
+
       - DOS (including DOS running under Windows)
+
       - DOS + DJGPP
+
       - DOS/Windows + Cygwin
+
+      - Amiga (untested, as of Dec 2007)
+
+        Amiga support was removed in version 4.10.0 but was restored for
+        version 4.11.0.
 
    Historically, 'pcal' was supported on other platforms as well, but
    beginning with version 4.10.0, support for these platforms has been
@@ -18,7 +26,6 @@ Overview:
 
       - OS/2
       - Vax/VMS
-      - Amiga
 
    'Pcal' is usually run from the command line but there is an HTML/CGI
    capability as well, to generate calendars (in either PostScript or HTML
@@ -89,6 +96,9 @@ Overview:
 
       http://pcal.sourceforge.net
 
+      Note: The latest information (including a list of any bugs or problems
+      with the latest release) can be found at that website.
+
    The 'pcal' and 'lcal' applications are available at:
    
       http://sourceforge.net/projects/pcal/
@@ -125,6 +135,255 @@ Building 'pcal':
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
+"Pcal" Version 4.11.0
+
+   This release of 'pcal' includes additional functionality, some bug fixes,
+   and an update of the associated documentation.
+
+   Major changes:
+
+      1) New functionality:
+
+         - Support for the following languages has been added:
+
+              - Slovak ("-a sk")
+
+                Thanks to Zdenko Podobny for this patch and for a new calendar
+                configuration file with Slovak holidays ('calendar_sk.txt'),
+                which is now included in the 'examples' directory.
+
+              - Hawaiian ("-a ha")
+
+                Thanks to Eric Nichols for this patch.
+
+         - Added a sample Spanish calendar configuration file, with Spanish
+           holidays ('calendar_es.txt'), generously provided by Francisco José
+           Marín Pérez.
+
+           Aside: The file was renamed from his original name of
+           'calendar_sp.txt' to 'calendar_es.txt', in order to match the
+           convention of using ISO 3166 (country codes) for 'pcal' sample
+           configuration files.
+
+         - Allow the drawing of moon phase icons ('-m' or '-M') and Julian
+           dates ('-j' or '-J') on yearly-format calendars.
+
+           Previously, these features were only allowed on monthly-format
+           calendars.  If someone has eyes good enough to see these things,
+           they should be allowed to add them to their yearly-format
+           calendars! :^)
+
+           Since moon phase icons and Julian dates were automatically disabled
+           on yearly-format calendars in older releases, you might be
+           surprised to suddenly find these (possibly unwanted) items on your
+           yearly-format calendars, assuming you have a 'pcal' configuration
+           file (loaded with '-f') with one of those 4 options enabled
+           (i.e. 'opt -m', 'opt -M', 'opt -j', and/or 'opt -J').  If you want
+           to see moon phases or Julian dates _only_ on your monthly-format
+           calendars, simply modify your configuration file(s) to use a check
+           such as this:
+
+              # 
+              # Display moon phase icons on every day of the month.
+              # 
+              # Beginning with version 4.11.0, this works on yearly-format (1
+              # year per page) calendars too.  But it can be disabled as shown
+              # below.
+              # 
+              ifndef whole_year
+                 opt -M
+              endif
+
+           Note that the 'pcal-cfg.txt' sample configuration file (distributed
+           with 'pcal' in the 'examples' subdirectory) has some examples of
+           this too.
+
+         - Added a new preposition -- 'on'.
+
+           The use of this preposition is similar to the existing prepositions
+           like 'on_or_before' and 'on_or_after', but it requires that the
+           event occur exactly on the specified day.
+
+           Some examples to clarify:
+
+              Sat on Jul 4     Huge party!
+
+                 This example causes the text "Huge party!" to be displayed
+                 only if July 4th (for that year) occurs on a Saturday.
+
+              Fri on all 13     Avoid black cats!
+
+                 This example causes the text "Avoid black cats!" to be
+                 displayed on Friday the 13th, for every month ("all") in
+                 which it occurs.
+
+           This new feature was added based on a request from (and partially
+           based on a patch from) Erkki Petsalo.
+
+         - Added a new option -- '-W [ left | center | right ]' -- to specify
+           the horizontal alignment of the month/year title displayed at the
+           top of monthly-format calendars.
+           
+           The default is, of course, 'center'.
+
+           Thanks to Todd Foster for providing a complete and thorough patch
+           to provide this new feature.  He uses it to avoid splitting the
+           month/year label as he cuts a monthly-format calendar apart to fit
+           into a 6x9-inch notebook, but this feature might be useful to
+           others as well.
+
+         - Per a request from Stefan Haubenthal, who provided a small patch
+           and a proper makefile ('Makefile.Amiga'), re-added support for the
+           Amiga platform, which had been removed in the last release (due to
+           unavailability of someone to test on that platform).
+
+      2) Removed functionality:
+
+         - Removed the long-obsolete external 'moon file' concept.  Now, we
+           depend solely on the algorithmic determination of moon phases,
+           which has been in place for many years and seems to be plenty
+           accurate.
+
+           The 'moon98' file (with manual entries of the dates and times of
+           the 4 primary moon phases for all of 1998) was also removed from
+           the 'examples' subdirectory, since it no longer serves any purpose.
+
+         - The 'F13' pre-defined event has been removed.  It is unnecessary
+           now that 'pcal' has support for the new 'on' preposition (described
+           above).
+
+           Replace any occurrence of 'F13' in your configuration file(s) with
+           this:
+
+              Fri on all 13
+
+           The 'examples/pcal-cfg.txt' and 'examples/calendar_nl.txt' files
+           were altered accordingly, intelligently using a pre-processor
+           'ifdef' directive and the pre-defined 'pcal' version symbol ('ifdef
+           v4_8_0 | v4_9_0 | v4_9_1 | v4_10_0') to use the appropriate format
+           for this event specification, depending upon which version of
+           'pcal' is being used.
+
+      3) Bug fixes:
+
+         - Fixed a bug present since the 4.10.0 release of 'pcal' whereby the
+           use of the '-J' (capital 'J') option to display both the Julian
+           date (day of year) and the number of remaining days in the year
+           erroneously caused garbage text (PostScript commands) to appear in
+           place of the number of days remaining in the year.
+
+         - Fixed a long-standing bug whereby the last line of a 'pcal'
+           configuration file was silently ignored if it ended without a 'line
+           feed' (ASCII 10 character).
+
+           Thanks to Thomas Zastrow for reporting this bug.
+
+          - Fixed a long-standing bug in the 'moon phase' calculations.
+
+           This bug only affected the pure DOS build (i.e. made with
+           'Makefile.DOS').  It did not affect the Linux/Unix builds or the
+           DJGPP-based or Cygwin-based builds.
+
+           This bug was causing the major phases of the moon (new, 1Q, full,
+           3Q) to be erroneously detected on 2 adjacent days instead of on
+           just the single day on which they actually occurred.
+
+           This in turn caused 2 of the same moon phase icons to appear on
+           adjacent days on monthly-format calendars when the '-m' option was
+           used.
+
+           Thanks to Eric Nichols who helped to confirm the presence of this
+           bug.
+
+      4) Other changes:
+
+         - In the USA calendar example file and the generic 'pcal-cfg.txt'
+           example file, commented out the pre-2007 rules for Daylight Saving
+           Time (DST) and added new rules for 2007 and beyond.
+
+         - Made some tweaks to the 'examples/pcal-cfg.txt' 'pcal' sample
+           configuration file, in some cases to demonstrate more 'pcal'
+           functionality.
+
+         - Added the Polish calendar ('examples/calendar_pl.txt'), provided by
+           Dominik 'Chiron' Derlatka in the previous 'pcal' release, to the
+           release package.
+
+           It had been inadvertently omitted from the 4.10.0 release (but was
+           available via CVS checkout since then).
+
+         - Added 2 Unix shell scripts to a new 'scripts' directory in the
+           'pcal' distribution:
+
+              - my_daily_reminder_script.sh
+              
+                This script provides daily email schedule reminders.
+
+              - group_calendaring.sh
+
+                This script allows a simple 'group calendaring' capability.
+
+           These scripts were written and generously provided by Kristofer
+           Bergstrom.  They help automate his usage of 'pcal' and should prove
+           useful to others.
+
+           Kris' detailed explanation of the usage of these scripts is
+           available as a link on the main 'pcal'/'lcal' website, but here's
+           the direct link:
+
+              http://pcal.sourceforge.net/scripts.html
+
+         - Modified the Unix makefile to allow use of a user-specified
+           destination directory ('$DESTDIR') on the installation step.
+    
+           For example: 
+
+              make DESTDIR=$HOME/test install
+    
+           Thanks to "Jonathan" (who's packaging 'pcal' for Gentoo) for this
+           idea and a related patch.
+
+         - Made various tweaks and updates to the 'man pcal' page.
+
+           Some of these are intended to provide more guidance and examples in
+           the use of 'pcal'.
+
+           Added a long-missing description of the pre-defined symbols for
+           paper size and page orientation, which can be used to advantage in
+           the 'pcal' configuration file.
+
+         - Fixed up a few errors (wrong credits, etc) and made various
+           required changes to previous release notes in this 'ReadMe.txt'
+           file.
+
+   Credits:
+   
+      The original calendar PostScript was Copyright (c) 1987 by Patrick Wood
+      and Pipeline Associates, Inc. with permission to modify and
+      redistribute.
+   
+      The following people contributed to Pcal v4.11.0:
+
+         Bug fixes, support for moon icons and 
+            Julian dates on yearly-format calendars,
+            and various other fixes:			Bill Marr
+         Slovak language support and config file:	Zdenko Podobny
+         Hawaiian language support:			Eric Nichols
+         Spanish config file:				Francisco José Marín Pérez
+         Useful Unix scripts:				Kristofer Bergstrom
+         New 'on' preposition:				Erkki Petsalo
+         Title alignment option:			Todd Foster
+         Amiga support:					Stefan Haubenthal
+
+      For a list of all known contributors to date, see the 'Authors' section
+      of the 'man' page.
+   
+   Bill Marr (marr99@users.sourceforge.net) 
+   18 Dec 2007
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
 "Pcal" Version 4.10.0
 
    This release of 'pcal' includes additional functionality, some bug fixes,
@@ -136,14 +395,18 @@ Building 'pcal':
 
          - Support for the following languages has been added:
 
-               - Danish ("-a da")
-               - Dutch ("-a nl")
-               - Polish ("-a pl")
-               - Romanian ("-a ro")
+              - Danish ("-a da")
+              - Dutch ("-a nl")
+              - Polish ("-a pl")
+              - Romanian ("-a ro")
 
            Thanks to Ewald Beekman, a new calendar configuration file with
            Dutch holidays ('calendar_nl.txt') is included in the 'examples'
            directory.
+
+           Thanks to Dominik 'Chiron' Derlatka, a new calendar configuration
+           file with Polish holidays ('calendar_pl.txt') is included in the
+           'examples' directory.
 
       2) Removed functionality:
 
@@ -645,15 +908,15 @@ Building 'pcal':
           configuration file for EPS image placement and scaling, based on
           paper size.
 
-         - Added new automatically-defined symbols based on the current page
-           orientation:
+        - Added new automatically-defined symbols based on the current page
+          orientation:
       
-              - "ORIENTATION_PORTRAIT"
-              - "ORIENTATION_LANDSCAPE"
+             - "ORIENTATION_PORTRAIT"
+             - "ORIENTATION_LANDSCAPE"
       
-           These can be useful for providing alternate values in the 'pcal'
-           configuration file for EPS image placement and scaling, based on
-           the page orientation.
+          These can be useful for providing alternate values in the 'pcal'
+          configuration file for EPS image placement and scaling, based on the
+          page orientation.
 
         - Support the definition of a symbol value along with a symbol name in
           'define' pre-processor directives in the 'pcal' configuration file.
@@ -694,6 +957,13 @@ Building 'pcal':
            displayed/printed in the encoding used) but will not be 100%.
            Patches would be gratefully accepted from anyone with the expertise
            to provide the necessary character encodings!
+
+           UPDATE: 
+
+              As of 'pcal-4.9.0', Russian, Latvian, and Lithuanian language
+              support is no longer considered "experimental" due to the
+              addition of the proper character encodings for those languages.
+              See the 'pcal-4.9.0' release notes (above) for details.
 
          - Substantial changes were made to the HTML user interface used to
            generate calendars.
@@ -820,6 +1090,10 @@ Building 'pcal':
       
            This is needed so that directives like 'ifdef ORIENTATION_PORTRAIT'
            in the configuration file work as expected.
+
+         - Fixed a flaw in the sizing of calendars generated in the 'portrait'
+           page orientation.  They were not using as much of the physical page
+           space as they should have been.
 
          - Collected all sample 'calendar options' files for various countries
            (some which were on the 'pcal' website or in the mailing list

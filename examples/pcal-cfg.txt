@@ -1,7 +1,9 @@
 # -----------------------------------------------------------------------------
 #    
 #    This file contains examples of various options, directives, and event
-#    definitions for the 'pcal' calendar-generation program.
+#    definitions for the 'pcal' calendar-generation program:
+#       
+#       http://pcal.sourceforge.net
 #       
 #    For full details on the available commands and the associated syntax,
 #    view the 'pcal.man' file (or one of the 'pcal-help.*' files which are
@@ -9,6 +11,28 @@
 #    
 # Revision History:
 #
+# 4.11.0
+#     
+#    2007-12-15 -- changes by Bill Marr (marr99@users.sourceforge.net):
+#       
+#       Account for the new version number in areas that check it.
+#       
+#       Fix Daylight Saving Time start/end dates to account for new rules in
+#       United States, starting in 2007.
+#       
+#       Add 2 new languages.
+#       
+#       Allow "Friday the 13th" event specification using both old (now
+#       obsolete) and new methods.
+#       
+#       Clarify comment associated with example of '-m' (moon icons) option.
+#       
+#       Add the project URL to the header comment section.
+#       
+#       Add various enhancements.
+#       
+#       Fix some minor comment errors.
+#       
 # 4.10.0
 #     
 #    2006-08-05 -- changes by Bill Marr (marr99@users.sourceforge.net):
@@ -68,13 +92,21 @@ opt -P letter
 opt -d Times-Roman/18 -t Times-Roman/30 -n Times-Roman/8
 
 # 
-# Display moon status icons on every day of a monthly calendar.
+# Display moon phase icons on every day of the month.
 # 
-opt -M
+# Beginning with version 4.11.0, this works on yearly-format (1 year per page)
+# calendars too.  But it can be disabled as shown below.
+# 
+ifndef whole_year
+   opt -M
+endif
 
 # 
-# Display moon status icons only on the days when the moon is at the 'full',
-# 'half', or 'new' stage.
+# Display moon phase icons only on the days when the moon is at the 'new',
+# 'first quarter', 'full', or 'last quarter' stage.
+# 
+# Beginning with version 4.11.0, this works on yearly-format (1 year per page)
+# calendars too.
 # 
 ### opt -m
 
@@ -82,13 +114,21 @@ opt -M
 # Display Julian dates (numeric sequence of days in year) on every day of a
 # monthly calendar.
 # 
+# Beginning with version 4.11.0, this works on yearly-format (1 year per page)
+# calendars too.
+# 
 # opt -j
 
 # 
 # Display Julian dates and 'days remaining in year' on every day of a monthly
 # calendar.
 # 
-opt -J
+# Beginning with version 4.11.0, this works on yearly-format (1 year per page)
+# calendars too.  But it can be disabled as shown below.
+# 
+ifndef whole_year
+   opt -J
+endif
 
 # 
 # Interpret dates in this file as 'American' style.
@@ -160,7 +200,7 @@ May 10 Eric's %-1991Y%oY Birthday
 # moves the EPS image down slightly to leave room for the "Eric's 14th
 # Birthday" text which will appear below the day's numerics.
 # 
-ifdef v4_8_0 | v4_9_0 | v4_9_1 | v4_10_0 
+ifdef v4_8_0 | v4_9_0 | v4_9_1 | v4_10_0 | v4_11_0 
 May 10 image:/path-to-eps/eric.eps 0.50 0.50 0 -8
 endif
 
@@ -199,7 +239,8 @@ endif
 
 # 
 # Demonstrate the ability to distinguish between different languages, in a
-# silly way, by writing the name of the language as a footer for the calendar.
+# silly way, by writing the name of the language as a centered footer for the
+# calendar, but only on monthly-format (1 month per page) calendars.
 # 
 ifndef whole_year
 if lang_en
@@ -246,12 +287,17 @@ elif lang_ro
    opt -C "Romanian"
 elif lang_da
    opt -C "Danish"
+elif lang_sk
+   opt -C "Slovak"
+elif lang_ha
+   opt -C "Hawaiian"
 endif
 endif
 
 # 
 # Demonstrate the ability to distinguish between different paper sizes, in a
-# silly way, by writing the name of the language as a footer for the calendar.
+# silly way, by writing the name of the paper size as a left-justified footer
+# for the calendar.
 # 
 ifdef papersize_letter
    opt -L	"LETTER paper"
@@ -266,8 +312,8 @@ endif
 
 # 
 # Demonstrate the ability to distinguish between different page orientations,
-# in a silly way, by writing the name of the language as a footer for the
-# calendar.
+# in a silly way, by writing the name of the page orientation as a
+# right-justified footer for the calendar.
 # 
 ifdef orientation_portrait
    opt -R	"PORTRAIT mode"
@@ -280,8 +326,18 @@ endif
 # 
 # Daylight Savings Time
 # 
-first Sunday in April		Begin DST
-last Sunday in Oct		End DST
+# 
+# Pre-2007:
+# 
+# first Sun in Apr		Begin DST
+# last Sun in Oct		End DST
+# 
+# 2007 and beyond:
+# 
+second Sun in Mar		Begin DST
+first Sun in Nov		End DST
+
+
 
 # 
 # Demonstrate some simple holiday events with embedded EPS images.
@@ -318,16 +374,28 @@ endif
 weekday nearest Jul 4*		# nonworkday in observance of U.S. Independence Day
 
 # 
-# Print a warning on 'Friday the 13th' dates.  
+# Print a warning on 'Friday the 13th' dates, for the superstitious among
+# us.  :^)
 # 
 # Note that this is a good example of a predefined event which we do not mark
 # ('*') as a holiday because we don't want the day numerics to be colorized
 # differently.
 # 
-F13 Avoid black cats!
+ifdef v4_8_0 | v4_9_0 | v4_9_1 | v4_10_0
+   # 
+   # Old way, no longer available as of version 4.11.0:
+   # 
+   F13			Avoid black cats!
+else
+   # 
+   # New, generic way, using the new 'on' preposition, available beginning
+   # with version 4.11.0:
+   # 
+   Fri on all 13		Avoid black cats!
+endif
 
 # 
-# Display the week number on every Monday...
+# Display the week number (i.e. 1-52) on every Monday...
 # 
 all monday in all	Week %w
 
@@ -356,7 +424,7 @@ every Wed in all		%A poker game
 # 2nd Thursday of any given month.
 # 
 all Thursday in all		%A golf game
-ifdef v4_9_0 | v4_9_1 | v4_10_0 
+ifdef v4_9_0 | v4_9_1 | v4_10_0 | v4_11_0 
 delete second Thursday in all	%A golf game
 endif
 

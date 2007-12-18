@@ -9,6 +9,13 @@
 
    Revision history:
 
+	4.11.0
+		B.Marr		2007-12-15
+		
+		Add support for Slovak language, thanks to Zdenko Podobny.
+		
+		Add support for Hawaiian language, thanks to Eric Nichols.
+		
 	4.10.0
 		B.Marr		2006-07-19
 		
@@ -41,7 +48,7 @@
 
 */
 
-#define NUM_LANGUAGES           22      /* *** Change this if adding languages *** */
+#define NUM_LANGUAGES           24      /* *** Change this if adding languages *** */
 #define LANG_ENGLISH            0
 #define LANG_GREEK              1
 #define LANG_ITALIAN            2
@@ -64,6 +71,9 @@
 #define LANG_DUTCH              19
 #define LANG_ROMANIAN           20
 #define LANG_DANISH             21
+#define LANG_SLOVAK             22
+#define LANG_HAWAIIAN           23
+
 
 #ifndef LANG_DEFAULT
 #define LANG_DEFAULT    LANG_ENGLISH

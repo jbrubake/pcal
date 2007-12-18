@@ -8,6 +8,32 @@
 
    Revision history:
 
+	4.11.0
+		B.Marr		2007-12-16
+		
+		Allow the drawing of moon phase icons ('-m' or '-M') and
+		Julian dates ('-j' or '-J') on yearly-format calendars.
+		
+		Perform various cosmetic cleanups (mostly by adding blank
+		lines) to the PostScript output.
+		
+		B.Marr		2007-12-15
+		
+		Fix bug whereby use of '-J' option caused garbage text
+		(PostScript commands) to appear in place of the number of days
+		remaining in the year.
+		
+		Add support for new '-W' option, to specify horizontal
+		alignment of the "Month/Year" title on monthly-format
+		calendars, thanks to a patch from Todd Foster.
+		
+		Remove long-obsolete external 'moon file' concept.  Now, we
+		depend solely on the algorithmic determination of moon phases.
+		
+		Rename some variables, structures, and/or routines to be
+		clearer about their purpose and/or to allow easier searching
+		with fewer "false positives".
+		
 	4.10.0
 		B.Marr		2006-07-19
 		
@@ -365,7 +391,7 @@ void ps_prtday_bw (void)
    printf("		  grestore stroke }\n");
    printf("	] color get exec			%% execute operators for color\n");
    printf("	grestore\n");
-   printf("} bind def\n");
+   printf("} bind def\n\n");
    return;
 }
 
@@ -590,7 +616,7 @@ void write_psfile (void)
       printf("		} for\n");
       printf("		newName newDict definefont pop\n");
       printf("	end\n");
-      printf("} bind def\n");
+      printf("} bind def\n\n");
 
       /* always generate code to remap title font */
       printf("/%s /%s%s remap_font\n", titlefont, titlefont, NEWFONT);
@@ -642,11 +668,18 @@ void write_psfile (void)
    
    printf("/weekdayfontsize %d def\n", wsize[dfltsize]);
    printf("/footfontsize %d def\n", fsize[dfltsize]);
-   printf("/notesfontsize %d def\n", nfsize);
+
+   /* Now that we allow Julian dates to be displayed on yearly-format
+      calendars, we must tweak the font size of the 'notes font' accordingly,
+      since that font is also used to display the Julian dates (if enabled by
+      the user)...
+   */ 
+   printf("/notesfontsize %d def\n", do_whole_year ? 24 : nfsize);
+
    printf("/headingfontsize %d def\n", HEADINGFONTSIZE);
    
    /* pre-scale all fonts used by PostScript code; try to be smart about
-      skipping those that we know (at this point) won't be needed (whole- year
+      skipping those that we know (at this point) won't be needed (whole-year
       calendars use either 3 or 4 fonts, while single-month calendars can use
       anywhere from 3 to 8).  "FF" et. al. are indices into the font array (cf
       pcalinit.ps) for the different font types.
@@ -681,10 +714,11 @@ void write_psfile (void)
       printf("/DF %d def\n", nfonts);   /* large/small dates */
       ADDFONT("df", calsize[LARGE], "date", TRUE);
       if (small_cal_pos != SC_NONE) ADDFONT("df", calsize[SMALL], "date", TRUE);
-
-      printf("/NF %d def\n", nfonts);   /* text in boxes */
-      ADDFONT("nf", calsize[LARGE], "notes", FALSE);
    }
+
+   printf("/NF %d def\n", nfonts);   /* text for note-boxes and/or Julian dates */
+   ADDFONT("nf", calsize[LARGE], "notes", FALSE);
+
 
    printf("/WF %d def\n", nfonts);   /* weekdays */
    ADDFONT("wf", calsize[dfltsize], "weekday", FALSE);
@@ -788,7 +822,15 @@ void write_psfile (void)
    printf("/datewidth 2 array def			%% for aligning holiday text\n");
    printf("\n");
    printf("/moonlinewidth 0.1 def			%% width of moon icon line\n");
-   printf("/radius 6 def				%% radius of moon icon\n");
+
+   /*
+
+     Moon icon radius is actually larger (due to scaling, I suppose) for a
+     yearly-format calendar...
+   
+   */ 
+   printf("/radius %d def				%% radius of moon icon\n", do_whole_year ? 12 : 6);
+
    printf("/halfperiod 0.5 def			%% scale factors, etc. used by 'domoon'\n");
    printf("/quartperiod 0.25 def\n");
    printf("/offset radius datemargin 0 get add def\n");
@@ -825,8 +867,8 @@ void write_psfile (void)
    printf("	allfonts exch\n");
    printf("	userdict /CurrentFontSet 2 index put\n");
    printf("	get setfont\n");
-   printf("} bind def\n");
-   printf("\n");
+   printf("} bind def\n\n");
+
    printf("%% <size> *FontSet => --\n");
    printf("%%\n");
    printf("%% fetch pre-scaled font (of desired calendar size) from 'allfonts' array\n");
@@ -853,9 +895,26 @@ void write_psfile (void)
    printf("%%\n");
    printf("/center {\n");
    printf("	1 index stringwidth pop sub 2 div 0 rmoveto show\n");
-   printf("} bind def\n");
-   printf("\n");
-   printf("\n");
+   printf("} bind def\n\n");
+
+   /* These 2 routines ('left' and 'right') were added to support the '-W'
+      option (horizontal alignment of title on monthly-format calendar).
+   */ 
+   printf("%% <string> <width> left => --\n");
+   printf("%%\n");
+   printf("%% display <string> justified left in <width>\n");
+   printf("%%\n");
+   printf("/left {\n");
+   printf("   1 index show\n");
+   printf("} bind def\n\n");
+   printf("%% <string> <width> right => --\n");
+   printf("%%\n");
+   printf("%% display <string> justified right in <width>\n");
+   printf("%%\n");
+   printf("/right {\n");
+   printf("   1 index stringwidth pop sub 0 rmoveto show\n");
+   printf("} bind def\n\n");
+
    printf("%% <str1> <str2> strcat => <string>\n");
    printf("%%\n");
    printf("%% concatenate <str1> and <str2>; push result onto stack\n");
@@ -867,7 +926,7 @@ void write_psfile (void)
    printf("	string\n");
    printf("	dup 0 6 -1 roll putinterval\n");
    printf("	dup 3 -1 roll 4 -1 roll putinterval\n");
-   printf("} bind def\n");
+   printf("} bind def\n\n");
 
 
    printf("%% -- nextbox => --\n");
@@ -879,9 +938,8 @@ void write_psfile (void)
    printf("		{ neggridwidth daywidth add negdayheight rmoveto }  %% next row\n");
    printf("		{ daywidth 0 rmoveto }				    %% next col\n");
    printf("	ifelse\n");
-   printf("} bind def\n");
-   printf("\n");
-   printf("\n");
+   printf("} bind def\n\n");
+
    printf("%% <box> boxpos => <x> <y>\n");
    printf("%%\n");
    printf("%% calculate and push coordinates of upper-left corner of <box> (0..41)\n");
@@ -889,9 +947,8 @@ void write_psfile (void)
    printf("/boxpos {\n");
    printf("	dup 7 mod daywidth mul					%% x-coord\n");
    printf("	exch 7 idiv negdayheight mul Y0 add			%% y-coord\n");
-   printf("} bind def\n");
-   printf("\n");
-   printf("\n");
+   printf("} bind def\n\n");
+
    printf("%% <day> datepos => <x> <y>\n");
    printf("%%\n");
    printf("%% calculate and push coordinates of upper-left corner of box for <day>\n");
@@ -899,9 +956,8 @@ void write_psfile (void)
    printf("/datepos {\n");
    printf("	startbox add 1 sub dup 7 mod daywidth mul		%% x-coord\n");
    printf("	exch 7 idiv negdayheight mul Y0 add			%% y-coord\n");
-   printf("} bind def\n");
-   printf("\n");
-   printf("\n");
+   printf("} bind def\n\n");
+
    printf("%%\n");
    printf("%% Functions for drawing components of calendar:\n");
    printf("%%\n");
@@ -909,9 +965,8 @@ void write_psfile (void)
    printf("%% but the Y-origin for printing text starts above any descenders (at the\n");
    printf("%% bottom of the upper-case characters).  The following code - and other\n");
    printf("%% code concerned with vertical spacing - assumes that the descenders\n");
-   printf("%% occupy 1/4 of the overall point size.\n");
-   printf("\n");
-   printf("\n");
+   printf("%% occupy 1/4 of the overall point size.\n\n");
+
    printf("%% -- drawtitle => --\n");
    printf("%%\n");
    printf("%% print month/year title centered at top of calendar\n");
@@ -924,10 +979,9 @@ void write_psfile (void)
    printf("	0 Y0 fontsize 0.25 mul add\n");
    printf("	  calsize small eq { 4 } { weekdayfontsize } ifelse\n");
    printf("	  1.15 mul add moveto\n");
-   printf("	month_name (  ) strcat yearstring strcat gridwidth center\n");
-   printf("} bind def\n");
-   printf("\n");
-   printf("\n");
+   printf("   month_name (  ) strcat yearstring strcat gridwidth %s\n", title_align);
+   printf("} bind def\n\n");
+
    printf("%% -- drawdaynames => --\n");
    printf("%%\n");
    printf("%% print weekday names centered above respective columns\n");
@@ -940,9 +994,8 @@ void write_psfile (void)
    printf("		day_names i get\n");
    printf("		daywidth center\n");
    printf("	} for\n");
-   printf("} bind def\n");
-   printf("\n");
-   printf("\n");
+   printf("} bind def\n\n");
+
    printf("%% -- drawgrid => --\n");
    printf("%%\n");
    printf("%% draw the grid (6 rows x 7 columns) for the calendar\n");
@@ -969,9 +1022,8 @@ void write_psfile (void)
    printf("	neggridwidth 0 rlineto\n");
    printf("	closepath\n");
    printf("	stroke\n");
-   printf("} bind def\n");
-   printf("\n");
-   printf("\n");
+   printf("} bind def\n\n");
+
    printf("%% -- drawnums => --\n");
    printf("%%\n");
    printf("%% print dates in appropriate boxes of calendar\n");
@@ -1005,8 +1057,7 @@ void write_psfile (void)
    printf("			nextbox\n");
    printf("		} for\n");
    printf("	} ifelse\n");
-   printf("} bind def\n");
-
+   printf("} bind def\n\n");
 
    printf("%% -- startpage => --\n");
    printf("%%\n");
@@ -1016,9 +1067,8 @@ void write_psfile (void)
    printf("	rval rotate\n");
    printf("	xsval ysval scale\n");
    printf("	xtval ytval translate\n");
-   printf("} bind def\n");
-   printf("\n");
-   printf("\n");
+   printf("} bind def\n\n");
+
    printf("%% -- calendar => --\n");
    printf("%%\n");
    printf("%% draw calendar for 'month'/'year', with various features enabled/disabled\n");
@@ -1029,14 +1079,40 @@ void write_psfile (void)
    printf("	calsize small ne { drawdaynames } if		%% weekday names\n");
    printf("	calsize large eq { footstrings } if		%% footer strings\n");
    printf("	drawnums					%% dates\n");
-   printf("	calsize large eq				%% Julian dates\n");
-   printf("	  julian-dates false ne and { drawjnums } if\n");
+
+   /*
+
+     On yearly-format calendars, eliminate the test 'calsize == large', so
+     that Julian dates get drawn when enabled by user...
+
+   */
+   if (do_whole_year) {
+      printf("	julian-dates false ne { drawjnums } if		%% Julian dates\n");
+   }
+   else {
+      printf("	calsize large eq				%% Julian dates\n");
+      printf("	  julian-dates false ne and { drawjnums } if\n");
+   }
+
    printf("	fill-boxes { drawfill } if			%% fill boxes\n");
    printf("	drawgrid					%% grid\n");
-   printf("	calsize large eq				%% moon icons\n");
-   printf("	  draw-moons false ne and { drawmoons } if   \n");
+
+   /*
+
+     On yearly-format calendars, eliminate the test 'calsize == large', so
+     that moon icons get drawn when enabled by user...
+
+   */
+   if (do_whole_year) {
+      printf("	draw-moons false ne { drawmoons } if		%% moon icons\n");
+   }
+   else {
+      printf("	calsize large eq				%% moon icons\n");
+      printf("	  draw-moons false ne and { drawmoons } if   \n");
+   }
+
    printf("	0 0 moveto\n");
-   printf("} bind def\n");
+   printf("} bind def\n\n");
 
 
    /* Additional PostScript code tailored to this calendar */
@@ -1065,7 +1141,7 @@ void write_psfile (void)
       printf("		  fill grestore stroke }\n");
       printf("	] color get exec			%% execute operators for color\n");
       printf("	grestore\n");
-      printf("} bind def\n");
+      printf("} bind def\n\n");
    }
    else {
       ps_prtday_bw();
@@ -1092,7 +1168,7 @@ void write_psfile (void)
       printf("		  fill grestore stroke }\n");
       printf("	] color get exec			%% execute operators for color\n");
       printf("	grestore\n");
-      printf("} bind def\n");
+      printf("} bind def\n\n");
    }
    else {
       ps_prtday_bw();
@@ -1110,14 +1186,14 @@ void write_psfile (void)
       printf("%%\n");
       printf("/setfill {					%% color version\n");
       printf("	fillgray aload pop setrgbcolor\n");
-      printf("} def\n");
+      printf("} def\n\n");
    }
    else {
       printf("%% set fill box shading using single value in 'fillgray'\n");
       printf("%%\n");
       printf("/setfill {					%% black and white version\n");
       printf("	fillgray setgray\n");
-      printf("} def\n");
+      printf("} def\n\n");
    }
    
 
@@ -1137,16 +1213,16 @@ void write_psfile (void)
       printf("	Rfootstring show\n");
       printf("	0 yfoot moveto\n");
       printf("	Cfootstring gridwidth center\n");
-      printf("} bind def\n");
+      printf("} bind def\n\n");
    }
    else {
       /* no foot strings */
-      printf("/footstrings {} bind def\n");
+      printf("/footstrings {} bind def\n\n");
    }
    
    if (blank_boxes) {
       /* blank fill boxes */
-      printf("/drawfill {} bind def\n");
+      printf("/drawfill {} bind def\n\n");
    }
    else {
       /* shaded fill boxes */
@@ -1178,9 +1254,8 @@ void write_psfile (void)
       printf("			grestore\n");
       printf("		} if\n");
       printf("	} for\n");
-      printf("} bind def\n");
-      printf("\n");
-      printf("\n");
+      printf("} bind def\n\n");
+
       printf("%% -- drawfill => --\n");
       printf("%%\n");
       printf("%% fill in unused boxes before and after calendar dates\n");
@@ -1188,8 +1263,8 @@ void write_psfile (void)
       printf("/drawfill {\n");
       printf("	0 startbox 1 sub fillboxes		%% fill boxes before calendar\n");
       printf("	startbox ndays add 41 fillboxes		%% fill boxes after calendar\n");
-      printf("} bind def\n");
-        }
+      printf("} bind def\n\n");
+   }
 
    if (do_whole_year) {
       
@@ -1215,7 +1290,7 @@ void write_psfile (void)
          printf("	translate\n");
          printf("	calendar\n");
          printf("	grestore\n");
-         printf("} bind def\n");
+         printf("} bind def\n\n");
       }
       else {
          /* medium months (portrait)  */
@@ -1247,161 +1322,10 @@ void write_psfile (void)
          printf("	translate\n");
          printf("	calendar\n");
          printf("	grestore\n");
-         printf("} bind def\n");
+         printf("} bind def\n\n");
       }
-      
-      /* no julians or moons */
-      printf("/drawjnums {} bind def\n");
-      printf("/do-moon-p { false } bind def\n");
-      printf("/drawmoons {} bind def\n");
-   } 
+   }
    else {
-      if (julian_dates == NO_JULIANS) {
-         /* no julian dates */
-         printf("/drawjnums {} bind def\n");
-      }
-      else {
-         /* some julian dates */
-         printf("%% -- drawjnums => --\n");
-         printf("%%\n");
-         printf("%% print day-of-year (and, optionally, days remaining) for each date\n");
-         printf("%%\n");
-         printf("/drawjnums {\n");
-         printf("	NotesFontSet\n");
-         printf("	1 datepos dayheight 3 sub sub exch daywidth 3 sub add exch moveto\n");
-         printf("\n");
-         printf("	1 1 ndays {\n");
-         printf("		/day exch def\n");
-         printf("		/jday jdstart day add 1 sub def\n");
-         printf("		/str jday 3 string cvs def\n");
-         printf("		julian-dates true eq {		%% print days left in year?\n");
-         printf("			/str str ( \050) strcat yearlen jday sub 3 string cvs\n");
-         printf("				strcat (\051) strcat def\n");
-         printf("		} if\n");
-         printf("		gsave\n");
-         printf("		str dup stringwidth pop 0 exch sub 0 rmoveto show\n");
-         printf("		grestore\n");
-         printf("		nextbox\n");
-         printf("	} for\n");
-         printf("} bind def\n");
-      }
-
-      if (draw_moons == NO_MOONS) {
-         /* no moons */
-         printf("/do-moon-p { false } bind def\n");
-         printf("/drawmoons {} bind def\n");
-      }
-      else {
-         /* moons on some or all days */
-         printf("%%\n");
-         printf("%% Moon drawing functions:\n");
-         printf("%%\n");
-         printf("\n");
-         printf("\n");
-         printf("%% <phase> domoon => --\n");
-         printf("%%\n");
-         printf("%% draw icon showing moon at <phase> (0 = new; .25 = fq; .5 = full; .75 = lq)\n");
-         printf("%%\n");
-         printf("/domoon {\n");
-         printf("	/phase exch def\n");
-         printf("\n");
-         printf("	gsave\n");
-         printf("	currentpoint translate\n");
-         printf("	newpath\n");
-         printf("\n");
-         printf("	%% if moon is full, just draw unfilled circle\n");
-         printf("\n");
-         printf("	phase halfperiod .01 sub ge phase halfperiod .01 add le and {\n");
-         printf("		0 0 radius\n");
-         printf("		0 360 arc stroke\n");
-         printf("	}\n");
-         printf("	{\n");
-         printf("		%% draw the line arc now; prepare (but don't draw) the fill arc\n");
-         printf("\n");
-         printf("		0 0 radius			%% for line and fill arcs\n");
-         printf("		0 0 radius \n");
-         printf("		phase halfperiod lt {		%% phase between new and full\n");
-         printf("			270 90 arc stroke	%% (line on right, fill on left)\n");
-         printf("			0 radius neg moveto\n");
-         printf("			270 90 arcn \n");
-         printf("		}\n");
-         printf("		{				%% phase between full and new\n");
-         printf("			90 270 arc stroke	%% (line on left, fill on right)\n");
-         printf("			0 radius neg moveto\n");
-         printf("			270 90 arc \n");
-         printf("			/phase phase halfperiod sub def\n");
-         printf("		} ifelse\n");
-         printf("\n");
-         printf("		%% curveto uses (x0,y0) [current point], (x1,y1), (x2,y2),\n");
-         printf("		%% and (x3,y3) as the control points for drawing a Bezier\n");
-         printf("		%% cubic section, used here as the curve dividing the moon\n");
-         printf("		%% icon into dark and light sections.  x1 is in the range\n");
-         printf("		%% -R*sqrt(2) <= x1 <= R*sqrt(2) and y1 is in the range\n");
-         printf("		%% 0 <= y1 <= R; note that except in the degenerate case\n");
-         printf("		%% where x1 = y1 = x2 = y2 = 0, the curve does not actually\n");
-         printf("		%% pass through (x1,y1) or (x2,y2).\n");
-         printf("\n");
-         printf("		/x1 quartperiod phase sub rect mul def\n");
-         printf("		/y1 x1 abs 2 sqrt div def\n");
-         printf("\n");
-         printf("		%% push control points for curveto\n");
-         printf("\n");
-         printf("					%% x0 = 0   (current\n");
-         printf("					%% y0 = R    point)\n");
-         printf("		x1			%% x1\n");
-         printf("		y1			%% y1\n");
-         printf("		x1			%% x2 = x1\n");
-         printf("		y1 neg			%% y2 = -y1\n");
-         printf("		0			%% x3 = 0\n");
-         printf("		radius neg		%% y3 = -R\n");
-         printf("\n");
-         printf("		%% draw Bezier curve; fill area between curve and fill arc\n");
-         printf("\n");
-         printf("		curveto\n");
-         printf("		fill\n");
-         printf("	} ifelse\n");
-         printf("\n");
-         printf("	grestore\n");
-         printf("} bind def\n");
-         printf("\n");
-         printf("\n");
-         printf("%% -- do-moon-p => <bool>\n");
-         printf("%%\n");
-         printf("%% determine whether or not moon icon is to be drawn on 'day'; push result\n");
-         printf("%%\n");
-         printf("/do-moon-p {\n");
-         printf("	draw-moons (some) eq {		%% printing quarter moons?  look up day\n");
-         printf("		/p false def\n");
-         printf("		quarter_moons { day eq { /p true def } if } forall\n");
-         printf("		p\n");
-         printf("	}\n");
-         printf("	{\n");
-         printf("		draw-moons		%% all moons or no moons\n");
-         printf("	} ifelse\n");
-         printf("} bind def\n");
-         printf("\n");
-         printf("\n");
-         printf("%% -- drawmoons => --\n");
-         printf("%%\n");
-         printf("%% main routine to draw moon icons on calendar\n");
-         printf("%%\n");
-         printf("/drawmoons {\n");
-         printf("	gsave\n");
-         printf("	moonlinewidth setlinewidth\n");
-         printf("	1 datepos offset sub exch daywidth add offset sub exch moveto\n");
-         printf("	/n 0 def			%% index into moon_phases\n");
-         printf("	1 1 ndays {\n");
-         printf("		/day exch def\n");
-         printf("		do-moon-p {		%% draw a moon today?\n");
-         printf("			moon_phases n get domoon\n");
-         printf("			/n n 1 add def\n");
-         printf("		} if\n");
-         printf("		nextbox\n");
-         printf("	} for\n");
-         printf("	grestore\n");
-         printf("} bind def\n");
-      }
-
       if (head) {
          /* date text */
          printf("%%\n");
@@ -1421,9 +1345,8 @@ void write_psfile (void)
          printf("	currentpoint pop /LM exch def\n");
          printf("	/RM LM daywidth textmargin 2 mul sub add def\n");
          printf("	showtext\n");
-         printf("} bind def\n");
-         printf("	\n");
-         printf("\n");
+         printf("} bind def\n\n");
+
          printf("%% <day> <text> holidaytext => --\n");
          printf("%%\n");
          printf("%% print <text> in <day> box (to right of date)\n");
@@ -1443,9 +1366,8 @@ void write_psfile (void)
          printf("	/mwidth do-moon-p {offset radius add} {0} ifelse def	%% moon width\n");
          printf("	/RM LM daywidth textmargin sub dwidth mwidth add sub add def\n");
          printf("	showtext\n");
-         printf("} bind def\n");
-         printf("\n");
-         printf("\n");
+         printf("} bind def\n\n");
+
          printf("%% <box> <text> notetext => --\n");
          printf("%%\n");
          printf("%% print notes heading (if any) and <text> in <box> (0..41)\n");
@@ -1471,18 +1393,16 @@ void write_psfile (void)
          printf("	/LM currentpoint pop def\n");
          printf("	/RM LM daywidth notemargin 2 mul sub add def\n");
          printf("	showtext\n");
-         printf("} bind def\n");
-         printf("\n");
-         printf("\n");
+         printf("} bind def\n\n");
+
          printf("%% -- crlf => --\n");
          printf("%%\n");
          printf("%% simulate carriage return/line feed sequence\n");
          printf("%%\n");
          printf("/crlf {\n");
          printf("	ypos notesfontsize sub /ypos exch def LM ypos moveto\n");
-         printf("} bind def\n");
-         printf("\n");
-         printf("\n");
+         printf("} bind def\n\n");
+
          printf("%% <string> prstr => --\n");
          printf("%%\n");
          printf("%% print <string> on current line if possible; otherwise print on next line\n");
@@ -1505,9 +1425,8 @@ void write_psfile (void)
          printf("		{ show }\n");
          printf("	ifelse\n");
          printf("	currentpoint grestore moveto	%% grestore alone would reset position\n");
-         printf("} bind def\n");
-         printf("\n");
-         printf("\n");
+         printf("} bind def\n\n");
+
          printf("%% -- showtext => --\n");
          printf("%%\n");
          printf("%% print words in 'mytext', inserting line breaks where necessary (or requested)\n");
@@ -1543,9 +1462,8 @@ void write_psfile (void)
          printf("			{ NotesFontSet }		%% font => roman (.r)\n");
          printf("		] n get exec\n");
          printf("	} forall\n");
-         printf("} bind def\n");
-         printf("\n");
-         printf("\n");
+         printf("} bind def\n\n");
+
          printf("%% <day> <text> <EPS-image-filename> <x-scaling> <y-scaling> <x-offset> <y-offset> epsimage => --\n");
          printf("%%\n");
          printf("%% print image <EPS-image-filename> in <day> box (below date)\n");
@@ -1576,7 +1494,7 @@ void write_psfile (void)
          printf("	end\n");
          printf("        \n");
          printf("	grestore\n");
-         printf("} bind def\n");
+         printf("} bind def\n\n");
       }
 
 
@@ -1592,8 +1510,8 @@ void write_psfile (void)
       printf("	calendar\n");
       printf("	printsmallcals				%% small calendars\n");
       printf("	\n");
-      printf("} bind def\n");
-      printf("\n");
+      printf("} bind def\n\n");
+
       printf("%% scale factor (slightly < 1/7) and offset for printing small calendars\n");
       printf("/scscale .138 def\n");
       printf("/scoffset gridwidth gridwidth scscale 7 mul mul sub 2.0 div def\n");
@@ -1633,7 +1551,150 @@ void write_psfile (void)
       printf("	} if\n");
       printf("\n");
       printf("	/startbox sv_startbox def		%% required for text boxes\n");
-      printf("} bind def\n");
+      printf("} bind def\n\n");
+   }
+
+   if (julian_dates == NO_JULIANS) {
+      /* no julian dates */
+      printf("/drawjnums {} bind def\n\n");
+   }
+   else {
+      /* some julian dates */
+      printf("%% -- drawjnums => --\n");
+      printf("%%\n");
+      printf("%% print day-of-year (and, optionally, days remaining) for each date\n");
+      printf("%%\n");
+      printf("/drawjnums {\n");
+      printf("	NotesFontSet\n");
+      printf("	1 datepos dayheight 3 sub sub exch daywidth 3 sub add exch moveto\n");
+      printf("\n");
+      printf("	1 1 ndays {\n");
+      printf("		/day exch def\n");
+      printf("		/jday jdstart day add 1 sub def\n");
+      printf("		/str jday 3 string cvs def\n");
+      printf("		julian-dates true eq {		%% print days left in year?\n");
+      printf("			/str str ( \\050) strcat yearlen jday sub 3 string cvs\n");
+      printf("				strcat (\\051) strcat def\n");
+      printf("		} if\n");
+      printf("		gsave\n");
+      printf("		str dup stringwidth pop 0 exch sub 0 rmoveto show\n");
+      printf("		grestore\n");
+      printf("		nextbox\n");
+      printf("	} for\n");
+      printf("} bind def\n\n");
+   }
+
+   if (draw_moons == NO_MOONS) {
+      /* no moons */
+      printf("/do-moon-p { false } bind def\n");
+      printf("/drawmoons {} bind def\n\n");
+   }
+   else {
+      /* moons on some or all days */
+      printf("%%\n");
+      printf("%% Moon-drawing functions:\n");
+      printf("%%\n\n");
+
+      printf("%% <phase> domoon => --\n");
+      printf("%%\n");
+      printf("%% draw icon showing moon at <phase> (0 = new; .25 = fq; .5 = full; .75 = lq)\n");
+      printf("%%\n");
+      printf("/domoon {\n");
+      printf("	/phase exch def\n");
+      printf("\n");
+      printf("	gsave\n");
+      printf("	currentpoint translate\n");
+      printf("	newpath\n");
+      printf("\n");
+      printf("	%% if moon is full, just draw unfilled circle\n");
+      printf("\n");
+      printf("	phase halfperiod .01 sub ge phase halfperiod .01 add le and {\n");
+      printf("		0 0 radius\n");
+      printf("		0 360 arc stroke\n");
+      printf("	}\n");
+      printf("	{\n");
+      printf("		%% draw the line arc now; prepare (but don't draw) the fill arc\n");
+      printf("\n");
+      printf("		0 0 radius			%% for line and fill arcs\n");
+      printf("		0 0 radius \n");
+      printf("		phase halfperiod lt {		%% phase between new and full\n");
+      printf("			270 90 arc stroke	%% (line on right, fill on left)\n");
+      printf("			0 radius neg moveto\n");
+      printf("			270 90 arcn \n");
+      printf("		}\n");
+      printf("		{				%% phase between full and new\n");
+      printf("			90 270 arc stroke	%% (line on left, fill on right)\n");
+      printf("			0 radius neg moveto\n");
+      printf("			270 90 arc \n");
+      printf("			/phase phase halfperiod sub def\n");
+      printf("		} ifelse\n");
+      printf("\n");
+      printf("		%% curveto uses (x0,y0) [current point], (x1,y1), (x2,y2),\n");
+      printf("		%% and (x3,y3) as the control points for drawing a Bezier\n");
+      printf("		%% cubic section, used here as the curve dividing the moon\n");
+      printf("		%% icon into dark and light sections.  x1 is in the range\n");
+      printf("		%% -R*sqrt(2) <= x1 <= R*sqrt(2) and y1 is in the range\n");
+      printf("		%% 0 <= y1 <= R; note that except in the degenerate case\n");
+      printf("		%% where x1 = y1 = x2 = y2 = 0, the curve does not actually\n");
+      printf("		%% pass through (x1,y1) or (x2,y2).\n");
+      printf("\n");
+      printf("		/x1 quartperiod phase sub rect mul def\n");
+      printf("		/y1 x1 abs 2 sqrt div def\n");
+      printf("\n");
+      printf("		%% push control points for curveto\n");
+      printf("\n");
+      printf("					%% x0 = 0   (current\n");
+      printf("					%% y0 = R    point)\n");
+      printf("		x1			%% x1\n");
+      printf("		y1			%% y1\n");
+      printf("		x1			%% x2 = x1\n");
+      printf("		y1 neg			%% y2 = -y1\n");
+      printf("		0			%% x3 = 0\n");
+      printf("		radius neg		%% y3 = -R\n");
+      printf("\n");
+      printf("		%% draw Bezier curve; fill area between curve and fill arc\n");
+      printf("\n");
+      printf("		curveto\n");
+      printf("		fill\n");
+      printf("	} ifelse\n");
+      printf("\n");
+      printf("	grestore\n");
+      printf("} bind def\n\n");
+
+      printf("%% -- do-moon-p => <bool>\n");
+      printf("%%\n");
+      printf("%% determine whether or not moon icon is to be drawn on 'day'; push result\n");
+      printf("%%\n");
+      printf("/do-moon-p {\n");
+      printf("	draw-moons (some) eq {		%% printing quarter moons?  look up day\n");
+      printf("		/p false def\n");
+      printf("		quarter_moons { day eq { /p true def } if } forall\n");
+      printf("		p\n");
+      printf("	}\n");
+      printf("	{\n");
+      printf("		draw-moons		%% all moons or no moons\n");
+      printf("	} ifelse\n");
+      printf("} bind def\n\n");
+
+      printf("%% -- drawmoons => --\n");
+      printf("%%\n");
+      printf("%% main routine to draw moon icons on calendar\n");
+      printf("%%\n");
+      printf("/drawmoons {\n");
+      printf("	gsave\n");
+      printf("	moonlinewidth setlinewidth\n");
+      printf("	1 datepos offset sub exch daywidth add offset sub exch moveto\n");
+      printf("	/n 0 def			%% index into moon_phases\n");
+      printf("	1 1 ndays {\n");
+      printf("		/day exch def\n");
+      printf("		do-moon-p {		%% draw a moon today?\n");
+      printf("			moon_phases n get domoon\n");
+      printf("			/n n 1 add def\n");
+      printf("		} if\n");
+      printf("		nextbox\n");
+      printf("	} for\n");
+      printf("	grestore\n");
+      printf("} bind def\n\n");
    }
 
    /*
@@ -2282,7 +2343,7 @@ char *expand_fmt (char *buf,   /* output buffer (filled in) */
    int firstday, wkday;
    int adjust = 0, print_lz = FALSE, ordinal = FALSE, prev_num = -1;
    int num_present = FALSE, num_value = 0;
-   DATE date;
+   date_str date;
    
    /* For compatibility with version 4.1, still support %[+-][bBdmY] (print
       the next/last month-name/day/month/year).  Version 4.11 introduces
@@ -2919,7 +2980,6 @@ void print_dates (int month, int year)
 void print_moon_info (int month, int year)
 {
    int n, ndays, day, quarter;
-   char *p;
    unsigned long qdays;
    double phase;
    static char *q[4] = {"NM", "1Q", "FM", "3Q"};
@@ -2928,12 +2988,8 @@ void print_moon_info (int month, int year)
 
    /* print the phase of the moon for each day of the month */
    
-   printf("/moon_phases [\t\t%% from ");
-   if ((p = find_moonfile(year)) != NULL) printf("%s", p);
-   else {
-      printf("algorithm");
-      if (atof(time_zone) != 0.0) printf(" (UTC offset = %s)", time_zone);
-   }
+   printf("/moon_phases [\t\t%% from algorithm ");
+   if (atof(time_zone) != 0.0) printf(" (UTC offset = %s)", time_zone);
    printf("\n\t");
    
    for (n = 0, qdays = 0L, day = 1, ndays = LENGTH_OF(month, year);
@@ -3016,9 +3072,20 @@ void print_month (int month, int year)
       printf("clear flush\n");
       printf("/PageNum { %d } def\n", page);
       printf("/PageState save def\n");
-      printf("%%%%EndPageSetup\n");
+      printf("%%%%EndPageSetup\n\n");
    }
 #endif
+
+   if (do_whole_year) {
+      /* reset foot strings at start of each page */
+      if (nmonths % 12 == 0) {
+         def_footstring(lfoot, "Lfootstring");
+         def_footstring(cfoot, "Cfootstring");
+         def_footstring(rfoot, "Rfootstring");
+         def_footstring(notes_hdr, "notesheading");
+         printf("\n");
+      }
+   }
    
    /* set up year and month */
    printf("/year %d def\n", year);
@@ -3038,19 +3105,14 @@ void print_month (int month, int year)
    find_noteboxes(month, year);   /* make list of note boxes */
    print_colors(month, year);   /* make list of date colors */
 
-   /* are we printing 12 months per page or only one? */
-   
+   /* Are we printing 12 months per page or only one? */
    if (do_whole_year) {
-      /* reset foot strings at start of each page */
-      if (nmonths % 12 == 0) {
-         def_footstring(lfoot, "Lfootstring");
-         def_footstring(cfoot, "Cfootstring");
-         def_footstring(rfoot, "Rfootstring");
-         def_footstring(notes_hdr, "notesheading");
-      }
-      
       printf("/posn %d def\n", nmonths % 12);   /* location on page */
-      printf("printmonth\n");
+
+      print_julian_info(month, year);   /* Julian date info */
+      print_moon_info(month, year);   /* moon info */
+
+      printf("printmonth\n\n");
    }
    else {
       /* reset foot strings each month (may change) */

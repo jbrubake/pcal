@@ -9,6 +9,21 @@
 
    Revision history:
 
+	4.11.0
+		B.Marr		2007-12-15
+		
+		Add support for new "on" preposition, thanks to a request from
+		and in part to a patch from Erkki Petsalo.
+		
+		Eliminate the now-needless "F13" ("Friday the 13th") special
+		event trigger and the associated processing of it.
+		
+		Rename some variables, structures, and/or routines to be
+		clearer about their purpose and/or to allow easier searching
+		with fewer "false positives".
+		
+		Fix some minor comment problems.
+		
 	4.10.0
 		B.Marr		2006-07-19
 		
@@ -181,7 +196,7 @@
 
 */
 
-/* status codes returned by parse(), enter_day_info() */
+/* status codes returned by parse_as_non_preproc(), enter_day_info() */
 #define PARSE_OK        0       /* successful date parse */
 #define PARSE_INVDATE   1       /* nonexistent date */
 #define PARSE_INVLINE   2       /* syntax error */
@@ -203,8 +218,7 @@
 /* append date to list; terminate list */
 #define ADD_DATE(_m, _d, _y)   do { \
 	if (DEBUG(DEBUG_DATES)) \
-		fprintf(stderr, "matched %d/%d/%d\n", \
-			_m, _d, _y); \
+		fprintf(stderr, "Adding candidate date: %4d-%02d-%02d\n", _y, _m, _d); \
 	pdate->mm = _m, pdate->dd = _d, pdate++->yy = _y; \
 	} while (0)
 
@@ -232,7 +246,35 @@
 
 */
 
-static DATE dates[MAX_DATES+1];   /* array of date structures */
+/* This array of 'date' (month, day, year) structures holds all of the
+   "candidate" dates for a single event specification read from the
+   configuration file.
+
+   For a simple once-a-year event, this array will hold just one entry.
+
+   For more complex events (those occurring more than once-a-year), this array
+   will hold several "candidate" dates.
+
+   Any dates in this array might get modified before the event is actually
+   added to the big linked list structure (which is eventually used to output
+   the actual calendar).  For example, an event specification of "Sat
+   on_or_before Dec 15" would cause Dec 15 (for the given year being
+   processed) to be added to this array, but the actual date that eventually
+   gets added to the linked list may be a day _before_ Dec 15th.
+
+   Additionally, some dates in this array might get invalidated (by having the
+   'year' field set to -1) so that the event is not actually added to the big
+   linked list structure.  This currently only occurs with the use of the "on"
+   preposition.  For example, an event specification of "Fri on all 13" (to
+   highlight all "Friday the 13th" days in all months) would cause 12 events
+   (for the given year being processed) to be added to this array, one for
+   each month's 13th day.  However, any entry in this array which does NOT
+   fall on a Friday would be marked as invalid, so that it won't actually be
+   added to the linked list.
+
+*/
+static date_str candidate_dates[MAX_DATES+1];   /* array of date structures */
+
 static char *pp_sym[MAX_PP_SYMS];   /* preprocessor defined symbols */
 static char *pp_val[MAX_PP_SYMS];   /* preprocessor defined symbols' values */
 static int curr_year_reset = FALSE;
@@ -259,8 +301,9 @@ static int delete_entry = FALSE;
       comments), 'loadwords()' to "tokenize" it, and 'get_token()' to classify
       it as a preprocessor directive or "other".  A switch statement takes the
       appropriate action for each token type; "other" lines are further
-      classified by 'parse()' which calls 'parse_date()' to parse date entries
-      and enter them in the data structure (as described in 'pcaldefs.h').
+      classified by 'parse_as_non_preproc()' which calls 'parse_date()' to
+      parse date entries and enter them in the data structure (as described in
+      'pcaldefs.h').
 
       The first parameter is a pointer to the file (assumed to be already
       open).
@@ -442,9 +485,17 @@ void read_datefile (FILE *fp, char *filename)
          extra = ntokens > 2;
          break;
          
-      case PP_OTHER:   /* none of the above - parse as date */
+      case PP_OTHER:   
+         /* None of the above... Parse this configuration file line as a
+            non-preprocessor directive.  This could be an event specification,
+            an event deletion specification, a 'year' specification, an 'input
+            language' specification, an option specification, or a 'note box'
+            text specification.
+         */
          if (if_state[if_level].state == PROCESSING) {
-            switch (parse(words, filename)) {
+
+            switch (parse_as_non_preproc(words, filename)) {
+
             case PARSE_INVDATE:
                ERR(E_INV_DATE);
                break;
@@ -983,8 +1034,8 @@ int is_lastq (int mm, int dd, int yy)
 /*
    Routines to find predefined holidays too complicated to express as Pcal
    date strings.  All add the matching date(s) (yes, holidays which span
-   multiple days are allowed) to the dates[] array (pointed to by pdate) and
-   return the number of matching dates.
+   multiple days are allowed) to the 'candidate_dates[]' array (pointed to by
+   pdate) and return the number of matching dates.
 */ 
 
 /* ---------------------------------------------------------------------------
@@ -998,7 +1049,7 @@ int is_lastq (int mm, int dd, int yy)
       Programming_, v. 1).
 
 */
-int find_easter (DATE *pdate)   /* pointer into date array */
+int find_easter (date_str *pdate)   /* pointer into date array */
 {
 #define METONIC 19   /* length of metonic cycle */
 
@@ -1008,7 +1059,7 @@ int find_easter (DATE *pdate)   /* pointer into date array */
       your full moon might not fall on the same day as the "official" one.
    */
 
-   DATE *sv_pdate = pdate;
+   date_str *sv_pdate = pdate;
    register int epact, fm;
    int golden, century, nleap;
    
@@ -1077,9 +1128,9 @@ int odox_easter_from_april1 (int year)
       It was almost blindly copied from PostScript source in 'gpscal'.
 
 */
-int find_odox_easter (DATE *pdate)   /* pointer into date array */
+int find_odox_easter (date_str *pdate)   /* pointer into date array */
 {
-   DATE *sv_pdate = pdate;
+   date_str *sv_pdate = pdate;
    int offs;
    
    /* easter is days from 1st April for easter sun */
@@ -1099,9 +1150,9 @@ int find_odox_easter (DATE *pdate)   /* pointer into date array */
       This routine finds the date for the Orthodox holiday.
 
 */
-int find_odox_stgeorge (DATE *pdate)   /* pointer into date array */
+int find_odox_stgeorge (date_str *pdate)   /* pointer into date array */
 {
-   DATE *sv_pdate = pdate;
+   date_str *sv_pdate = pdate;
    int offs;
    
    /* offs is days from 1st April for easter sun */
@@ -1112,6 +1163,7 @@ int find_odox_stgeorge (DATE *pdate)   /* pointer into date array */
    } 
    else ADD_DATE(APR, 23, curr_year);
 
+   /* return number of dates added */
    return pdate - sv_pdate;
 }
 
@@ -1124,9 +1176,9 @@ int find_odox_stgeorge (DATE *pdate)   /* pointer into date array */
       This routine finds the date for the Orthodox holiday.
 
 */
-int find_odox_marcus (DATE *pdate)   /* pointer into date array */
+int find_odox_marcus (date_str *pdate)   /* pointer into date array */
 {
-   DATE *sv_pdate = pdate;
+   date_str *sv_pdate = pdate;
    int offs;
    
    /* offs is days from 1st April for easter sun */
@@ -1137,36 +1189,11 @@ int find_odox_marcus (DATE *pdate)   /* pointer into date array */
    } 
    else ADD_DATE(APR, 25, curr_year);
 
+   /* return number of dates added */
    return pdate - sv_pdate;
 }
 
 #endif /* !NO_ORTHODOX */
-
-/* ---------------------------------------------------------------------------
-
-   x
-
-   Notes:
-
-      This routine finds a 'Friday the 13th' event.
-
-      (A specification of "F13" in the configuration file will generate these
-      'Friday the 13th' events.)
-
-*/
-int find_fri13th (DATE *pdate)   /* pointer into date array */
-{
-   DATE *sv_pdate = pdate;
-   int month;
-   
-   for (month = JAN; month <= DEC; month++) {
-      if (calc_weekday(month, 13, curr_year) == 5) {
-         ADD_DATE(month, 13, curr_year);
-      }
-   }
-   
-   return pdate - sv_pdate;
-}
 
 /*
  * Keyword classification routines
@@ -1522,7 +1549,8 @@ year_info *find_year (int year, int insert)
 
       Avoid entering duplicates.
 
-      It returns 'PARSE_INVDATE' if the specifeid date is invalid, 'PARSE_OK' if OK.
+      It returns 'PARSE_INVDATE' if the specified date is invalid, 'PARSE_OK'
+      if OK.
 
       If symbol 'FEB_29_OK' is non-zero (see 'pcaldefs.h'), it will silently
       ignore Feb 29 of common year.
@@ -1564,7 +1592,7 @@ int enter_day_info (int m, int d, int y, int text_type, char **pword)
 
    if (DEBUG(DEBUG_DATES)) {
       char *p;
-      fprintf(stderr, "%02d/%02d/%d%c '", m+1, d+1, y, is_holiday ? '*' : ' ');
+      fprintf(stderr, "Adding event: %02d/%02d/%d%c '", m+1, d+1, y, is_holiday ? '*' : ' ');
       for (p = text; *p; p++) {
          fprintf(stderr, isprint((int)*p) ? "%c" : "\\%03o", *p & CHAR_MSK);
       }
@@ -1625,13 +1653,15 @@ int enter_day_info (int m, int d, int y, int text_type, char **pword)
 
       This routine deletes text for the specified day.
 
-      It returns 'PARSE_INVDATE' if the date is invalid, 'PARSE_OK' if OK.
+      It returns 'PARSE_INVDATE' if the specified date is invalid, 'PARSE_OK'
+      if OK.
 
       If symbol 'FEB_29_OK' is non-zero (see 'pcaldefs.h'), it will silently
       ignore Feb 29 of common year.
 
       It will silently ignore attempts to remove non-existent entries.  It
-      also recalculates 'is_holiday'.
+      also recalculates 'is_holiday', in case a holiday event is being
+      deleted.
 
 */
 int delete_day_info (int m, int d, int y, int text_type, char **pword)
@@ -1667,7 +1697,7 @@ int delete_day_info (int m, int d, int y, int text_type, char **pword)
    
    if (DEBUG(DEBUG_DATES)) {
       char *p;
-      fprintf(stderr, "%02d/%02d/%d%c '", m+1, d+1, y, is_holiday ? '*' : ' ');
+      fprintf(stderr, "Deleting event: %02d/%02d/%d%c '", m+1, d+1, y, is_holiday ? '*' : ' ');
       for (p = text; *p; p++) {
          fprintf(stderr, isprint((int)*p) ? "%c" : "\\%03o", *p & CHAR_MSK);
       }
@@ -1736,31 +1766,41 @@ int enter_note (int mm, char **pword, int n)
 
 /* ---------------------------------------------------------------------------
 
-   process_date
+   process_event_specification
 
    Notes:
 
-      This routine acts as a wrapper around 'enter_day_info()' /
-      'delete_day_info()' for entering/deleting date text.
+      This routine adds or deletes events (including the specific date and its
+      associated text) to/from the big linked list structure (described in
+      greater detail in 'pcaldefs.h').
 
 */
-int process_date (char **pword, int *ptext_type, char ***pptext)
+int process_event_specification (char **pword, int *ptext_type, char ***pptext)
 {
    int rtn, match;
-   DATE *pd;
+   date_str *pd;
    
    /* parse date spec and enter information for each match */
    if ((rtn = parse_date(pword, ptext_type, pptext)) == PARSE_OK) {
       match = FALSE;
-      for (pd = dates; pd->mm; pd++) {
-         
-         if (delete_entry) {
-            match |= delete_day_info(pd->mm, pd->dd, pd->yy,
-                                     *ptext_type, *pptext) == PARSE_OK;
+      for (pd = candidate_dates; pd->mm; pd++) {
+
+         if (pd->yy == -1) {
+            if (DEBUG(DEBUG_DATES)) {
+               fprintf(stderr, "Bypassing invalidated candidate date: yyyy-%02d-%02d.\n", pd->mm, pd->dd);
+            }
          }
          else {
-            match |= enter_day_info(pd->mm, pd->dd, pd->yy,
-                                    *ptext_type, *pptext) == PARSE_OK;
+            if (DEBUG(DEBUG_DATES)) {
+               fprintf(stderr, "Processing candidate date: %4d-%02d-%02d\n", pd->yy, pd->mm, pd->dd);
+            }
+            
+            if (delete_entry) {
+               match |= delete_day_info(pd->mm, pd->dd, pd->yy, *ptext_type, *pptext) == PARSE_OK;
+            }
+            else {
+               match |= enter_day_info(pd->mm, pd->dd, pd->yy, *ptext_type, *pptext) == PARSE_OK;
+            }
          }
       }
       rtn = match ? PARSE_OK : PARSE_NOMATCH;
@@ -1783,8 +1823,8 @@ int process_date (char **pword, int *ptext_type, char ***pptext)
 
       It returns 'PARSE_OK' if line syntax is valid, 'PARSE_INVLINE' if not.  
 
-      It writes all matching dates (if any) to the global array 'dates[]'.  It
-      terminates the date list with a null entry.
+      It writes all matching dates (if any) to the global array
+      'candidate_dates[]'.  It terminates the date list with a null entry.
 
       The first parameter is a valid ordinal code (from 'get_ordinal()').
 
@@ -1797,7 +1837,7 @@ int parse_ord (int ord, int val, char **pword)
 {
    int wkd, mon, mm, dd, len, doit, (*pfcn) (int, int, int);
    int val_first, val_last, val_incr, mon_first, mon_last;
-   DATE *pdate, date;
+   date_str *pdate, date;
    
    if ((wkd = get_weekday(*pword, TRUE)) == NOT_WEEKDAY ||   /* weekday */
        *++pword == NULL ||   /* any word */
@@ -1809,7 +1849,7 @@ int parse_ord (int ord, int val, char **pword)
    mon_first = mon == ALL_MONTHS || mon == ENTIRE_YEAR ? JAN : mon;
    mon_last  = mon == ALL_MONTHS || mon == ENTIRE_YEAR ? DEC : mon;
    
-   pdate = dates;   /* start of date array */
+   pdate = candidate_dates;   /* start of 'candidate_dates[]' array */
 
    /* special case of "all|odd|even <wildcard> in <month>|all|year" */
 
@@ -1881,8 +1921,8 @@ int parse_ord (int ord, int val, char **pword)
       It transforms all dates that match the base date to the appropriate day,
       month, and year.
     
-     It calls 'parse_date()' recursively in order to handle cases such as
-     "Friday after Tuesday before last day in all".
+      It calls 'parse_date()' recursively in order to handle cases such as
+      "Friday after Tuesday before last day in all".
 
       The first parameter is a valid (positive) ordinal value.
 
@@ -1899,7 +1939,7 @@ int parse_ord (int ord, int val, char **pword)
 int parse_rel (int val, int wkd, char **pword, int *ptype, char ***pptext)
 {
    int prep, n, rtn, base_wkd, incr = 1, (*pfcn) (int, int, int);
-   DATE *pd;
+   date_str *pd;
    
    /* we have the weekday - now look for the preposition */
    if ((prep = get_prep(*pword++)) == PR_OTHER) return PARSE_INVLINE;
@@ -1907,13 +1947,13 @@ int parse_rel (int val, int wkd, char **pword, int *ptype, char ***pptext)
    /* get the base date */
    if ((rtn = parse_date(pword, ptype, pptext)) != PARSE_OK) return rtn;
 
-   /* transform date array in place - note that the relative date may not be
-      in the same month or even year */
+   /* transform 'candidate_dates' array in place - note that the relative date may not
+      be in the same month or even year */
    
    if (IS_WILD(wkd)) {   /* wildcard for weekday name? */
       pfcn = pdatefcn[wkd - WILD_FIRST];
       
-      for (pd = dates; pd->mm; pd++) {
+      for (pd = candidate_dates; pd->mm; pd++) {
          
          /* search for nearest matching date */
          
@@ -1972,9 +2012,9 @@ int parse_rel (int val, int wkd, char **pword, int *ptype, char ***pptext)
          }
       }
 
-   } 
+   }
    else  {   /* explicit weekday name */
-      for (pd = dates; pd->mm; pd++) {
+      for (pd = candidate_dates; pd->mm; pd++) {
          
          /* calculate nearest matching weekday - note that "nearest_before"
            and "nearest_after" are synonyms for "before" and "after"
@@ -2001,7 +2041,23 @@ int parse_rel (int val, int wkd, char **pword, int *ptype, char ***pptext)
             val = wkd - base_wkd;
             pd->dd += (val > 3) ? (val - 7) : (val < -3) ? (val + 7) : val;
             break;
-            
+
+         case PR_ON:
+            /*
+              The 'on' preposition is a special case.  When the conditions it
+              specifies are not matched, we really need to actually _remove_
+              this entry from the 'candidate dates' array.
+              
+              However, for now, it's easier to just set the 'year' ('yy')
+              field in the 'candidate dates' array to -1, as a flag to ignore
+              this date entry entirely when later adding events to the big
+              linked list based on entries from this 'candidate dates' array.
+            */
+            if (wkd != base_wkd) {
+               pd->yy = -1;  /* invalidate this 'candidate date' entry... */
+            }
+            break;
+
          default:
             return PARSE_INVLINE;
             break;
@@ -2022,28 +2078,29 @@ int parse_rel (int val, int wkd, char **pword, int *ptype, char ***pptext)
 
       This routine parses a date specification in any of its myriad forms.
 
-      Upon return, 'array dates[]' will contain a list of all the dates that
-      matched, terminated by a null entry.  This routine also fills in the
-      date type (holiday/non- holiday) code and the pointer to the first word
-      of text and sets the flag 'curr_year_reset' if the date specified (e.g.,
-      dd/mm/yy) explicitly reset the year.
+      Upon return, array 'candidate_dates[]' will contain a list of all the
+      dates that matched, terminated by a null entry.  This routine also fills
+      in the date type (holiday/non- holiday) code and the pointer to the
+      first word of text and sets the flag 'curr_year_reset' if the date
+      specified (e.g., dd/mm/yy) explicitly reset the year.
 
       The first parameter is a pointer to the first word to parse.
 
       The second parameter is a pointer to the returned date type
       (holiday/non-holiday).
 
-      The third parameter is a pointer to the returned first word of text.
+      The third parameter is a pointer to the returned first word of the event
+      text string from the line in the configuration file.
 
 */
 int parse_date (char **pword, int *ptype, char ***pptext)
 {
    int mm, dd, yy;
    int token, n, v, ord, val, wkd, rtn;
-   DATE *pdate;
+   date_str *pdate;
    char *cp;
    
-   pdate = dates;
+   pdate = candidate_dates;
    curr_year_reset = FALSE;   /* set below if date is dd/mm/yy */
    
    switch (token = date_type(*pword, &n, &v)) {
@@ -2108,10 +2165,14 @@ int parse_date (char **pword, int *ptype, char ***pptext)
       /* fall through */
       
    case DT_ORDINAL:   
-      /* <ordinal> <weekday> in [ <month> | "all" ] or <ordinal> <weekday>
-         <prep> <date> */
+      /* 
+         <ordinal> <weekday> in [ <month> | "all" ] 
+            or 
+         <ordinal> <weekday> <prep> <date> 
+      */
       ord = n;
       val = v;
+
       /* disambiguate above cases based on preposition */
       if (ord == ORD_POSNUM && pword[1] && (get_prep(pword[2]) != PR_OTHER)) {
          if ((wkd = get_weekday(pword[1], TRUE)) == NOT_WEEKDAY) return PARSE_INVLINE;
@@ -2171,28 +2232,31 @@ int parse_date (char **pword, int *ptype, char ***pptext)
 
 /* ---------------------------------------------------------------------------
 
-   parse
+   parse_as_non_preproc
 
    Notes:
 
-      This routine parses non-preprocessor lines in the configuration file
-      ('date file').
-     
-      This routine parses "year", "opt", "note", and date entries in the
-      configuration file.  It calls 'parse_date()' to parse date entries (and
-      enter the date(s) matched in global array 'dates'), and then calls
-      'enter_day_info()' to enter each date found (and its associated text) in
-      the date file.
-     
-      N.B.: "inc" and other cpp-like lines are handled in 'read_datefile()'.
+      This routine parses a single non-preprocessor line from the
+      configuration file.
+    
+      This includes the "year", "opt", "note", "delete", and (most frequently)
+      event specification entries in the configuration file.
+
+      For event specifications (and event deletions), this routine calls
+      'process_event_specification()' to parse the date specification and to
+      enter the matching event date(s) in the global array
+      'candidate_dates[]'.
+
+      Note: Pre-processor ('cpp'-like) directives (e.g. "include") from the
+      configuration file are handled in 'read_datefile()'.
 
       The first parameter is a pointer to the first word to parse.
 
-      The second parameter is the name of the configuration file (for errror
+      The second parameter is the name of the configuration file (for error
       messages).
 
 */
-int parse (char **pword, char *filename)
+int parse_as_non_preproc (char **pword, char *filename)
 {
    register char *cp;
    char **ptext;
@@ -2264,13 +2328,14 @@ int parse (char **pword, char *filename)
       return PARSE_INVLINE;
       break;
       
-   case DT_DELETE:   /* fall through to actually delete entry */
+   case DT_DELETE:   /* fall through to actually delete event entry */
       pword++;
       delete_entry = TRUE;
       
-      /* assume anything else is a date */
-
    default:
+      /* At this point, we assume that the configuration file line is an event
+         specification... */
+
       /* If the current year is a wildcard ("all" or "*" - see above), enter
          the date for each year covered at least partially by the calendar.
          Note that a "mm/dd/yy" date spec explicitly resets curr_year;
@@ -2281,7 +2346,7 @@ int parse (char **pword, char *filename)
          match = FALSE;
          /* loop over each applicable year */
          for (curr_year = init_year; curr_year <= final_year; curr_year++) {
-            match |= process_date(pword, &text_type, &ptext) == PARSE_OK;
+            match |= process_event_specification(pword, &text_type, &ptext) == PARSE_OK;
             if (curr_year_reset) {   /* quit if year reset */
                return match ? PARSE_OK : PARSE_NOMATCH;
             }
@@ -2293,7 +2358,7 @@ int parse (char **pword, char *filename)
          return match ? PARSE_OK : PARSE_NOMATCH;
       }
 
-      match = process_date(pword, &text_type, &ptext);
+      match = process_event_specification(pword, &text_type, &ptext);
       delete_entry = FALSE;
       return match;
       

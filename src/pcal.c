@@ -1,4 +1,12 @@
-static char  VERSION_STRING[]	= "@(#)pcal v4.10.0 - generate PostScript calendars";
+static char  VERSION_STRING[]	= "@(#)pcal v4.11.0 - generate PostScript calendars";
+
+#ifdef AMIGA
+#ifndef __AMIGADATE__
+#define __AMIGADATE__ "("__DATE__")"
+#endif
+const char  VERsion_STRING[]	= "$VER: pcal 4.11.0 "__AMIGADATE__;
+#endif
+
 /* ---------------------------------------------------------------------------
 
    pcal.c
@@ -28,6 +36,29 @@ static char  VERSION_STRING[]	= "@(#)pcal v4.10.0 - generate PostScript calendar
      
    Revision history:
 
+	4.11.0
+		B.Marr		2007-12-16
+		
+		Allow the drawing of moon phase icons ('-m' or '-M') and
+		Julian dates ('-j' or '-J') on yearly-format calendars.
+		
+		B.Marr		2007-12-15
+		
+		Update version number in version string.
+		
+		Add support for new "on" preposition, thanks to a request from
+		and in part to a patch from Erkki Petsalo.
+		
+		Eliminate the now-needless "F13" ("Friday the 13th") special
+		event trigger and the associated processing of it.
+		
+		Add support for new '-W' option, to specify horizontal
+		alignment of the "Month/Year" title on monthly-format
+		calendars, thanks to a patch from Todd Foster.
+		
+		Add support for building on Amiga, thanks to a patch from
+		Stefan Haubenthal.
+		
 	4.10.0
 		B.Marr		2006-07-19
 		
@@ -444,6 +475,8 @@ int next_cal_box[4] = NEXT_CAL_BOX;
 char time_zone[STRSIZ] = TIMEZONE;   /* -z */
 int tz_flag = FALSE;
 
+char title_align[STRSIZ] = TITLE_ALIGN;   /* -W */
+
 int debug_flags = 0;   /* -Z */
 
 
@@ -510,8 +543,6 @@ KWD_H predef_events[] = {
    { "Thanksgiving", "Fourth Thu in November", NULL },
    { "Easter", NULL, find_easter },
    { "Good_Friday", "Friday before Easter", NULL },
-   /* Allow user to specify "F13" as set of 'Friday the 13th' events */
-   { "F13", NULL, find_fri13th },
 #ifndef NO_ORTHODOX
    /* Orthodox Easter related */
    { "GEaster", NULL, find_odox_easter },
@@ -541,6 +572,7 @@ KWD preps[] = {
    { "nearest",		PR_NEAREST },
    { "nearest_before",	PR_NEAREST_BEFORE },
    { "nearest_after",	PR_NEAREST_AFTER },
+   { "on",		PR_ON },
    { NULL,		PR_OTHER }   /* must be last */
 };
 
@@ -692,6 +724,8 @@ FLAG_USAGE flag_tbl[] = {
 	{ F_SETLANG,	TRUE,		 P_ENV | P_CMD1 | P_OPT		 },
 
 	{ F_TYPEFACE,	TRUE,		 P_ENV | P_CMD1 | P_OPT		 },
+
+	{ F_TITLEALIGN,	TRUE,		P_ENV | P_CMD1 | P_OPT		 },
 
 	{ F_DEBUG,	TRUE,	P_CMD0 | P_ENV		| P_OPT		 },
 
@@ -923,6 +957,10 @@ FLAG_MSG flag_msg[] = {
 
 	{ F_TYPEFACE,	W_TYPEFACE,	"specify font style (Bold | Italic | Roman)",		NULL },
 	{ GROUP_DEFAULT,									W_ROMAN },
+	{ END_GROUP },
+
+	{ F_TITLEALIGN,	W_TITLEALIGN,	"specify title alignment",				NULL },
+	{ GROUP_DEFAULT,									"center" },
 	{ END_GROUP },
 
 	{ END_LIST }   /* must be last */
@@ -1831,7 +1869,11 @@ int get_args (char **argv, int  curr_pass, char *where, int  get_numargs)
          fontstyle[0] = (c == BOLD || c == ITALIC) ? c : ROMAN;
          fontstyle[1] = '\0';   /* just in case */
          break;
-         
+
+      case F_TITLEALIGN:  /* specify title alignment (left/center/right) */
+         strcpy (title_align, parg && IS_TITLE_ALIGN(parg) ? parg : TITLE_ALIGN);
+         break;         
+
       case F_DEBUG:   /* turn on debugging (undocumented) */
          sv_debug = DEBUG(DEBUG_OPTS);
          set_debug_flag(parg);
@@ -2069,8 +2111,7 @@ char *gen_lang_sym (int lang)
            a) to parse the command line, looking only for -Z flags (which turn
               on debugging information) and numeric parameters
      
-           b) to parse environment variable (global symbol on VMS) PCAL_OPTS,
-              if defined
+           b) to parse environment variable PCAL_OPTS, if defined
      
            c) to parse the command line a second time, looking for options
               related to finding/interpreting the date file: -[cefhuvDU]
@@ -2157,10 +2198,6 @@ int main (int argc GCC_UNUSED, char **argv)
    if (do_whole_year) {
       nmonths = ((nmonths + 11) / 12) * 12;
       if (nargs == 0) init_month = JAN;
-
-      /* also disable some meaningless flags */
-      draw_moons = NO_MOONS;
-      julian_dates = NO_JULIANS;
    }
 
    /* recalculate final month and year (latter needed for "year all") */

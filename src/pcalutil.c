@@ -8,6 +8,19 @@
 
    Revision history:
 
+	4.11.0
+		B.Marr		2007-12-15
+		
+		Fix long-standing bug whereby the last line of a configuration
+		file was silently ignored if it ended without a 'line feed'
+		(ASCII 10 character).
+		
+		Rename some variables, structures, and/or routines to be
+		clearer about their purpose and/or to allow easier searching
+		with fewer "false positives".
+		
+		Minor comment typo fixes.
+		
 	4.10.0
 		B.Marr		2006-07-19
 		
@@ -294,7 +307,7 @@ int ci_strncmp (register char *s1, register char *s2, int n)
 
    Notes:
 
-      This routine overwritess "orig_font" with the specified fields from
+      This routine overwrites "orig_font" with the specified fields from
       "new_font" (or with "dflt_font" if "new_font" is NULL or null string).
 
 */
@@ -335,7 +348,7 @@ void define_font (char *orig_font, char *new_font, char *dflt_font)
 
    Notes:
 
-      This routine overwritess "orig_shading" with the specified fields from
+      This routine overwrites "orig_shading" with the specified fields from
       "new_shading" (or with "dflt_shading" if "new_shading" is NULL or null
       string).
 
@@ -434,7 +447,7 @@ char *set_fontstyle (char *p, char *esc)
       The first parameter is a pointer to the date.
 
 */
-void normalize (DATE *pd)
+void normalize (date_str *pd)
 {
    int len;
 
@@ -515,10 +528,10 @@ int calc_day (int ord, int wkd, int mm)
       FALSE.
 
 */
-int calc_year_day (int ord, int wkd, DATE *pdate)
+int calc_year_day (int ord, int wkd, date_str *pdate)
 {
    int incr, (*pfcn) (int, int, int);
-   DATE date;
+   date_str date;
    
    if (IS_WILD(wkd)) {   /* "day", "weekday", "workday", or "holiday" */
       pfcn = pdatefcn[wkd - WILD_FIRST];
@@ -1080,7 +1093,23 @@ int get_pcal_line (FILE *fp, char *buf, int *pline)
          else return FALSE;
       }
 
-      if (c == EOF) return FALSE;    /* no more input lines */
+      if (c == EOF) {
+         /* 
+            15 Dec 2007: 
+
+            Prior to the 4.11.0 release, the code just returned 'FALSE' here,
+            with no other test being performed.
+
+            That was causing a bug whereby the last line of a configuration
+            file was silently ignored if it ended without a 'line feed' (ASCII
+            10 character).
+
+            Adding a test, as done below, to see if anything is in the line
+            buffer (before deciding to return 'FALSE') fixes this bug.
+
+         */
+         if ((cp - tmpbuf) == 0) return FALSE;    /* no more input lines */
+      }
 
       (*pline)++;   /* bump line number */
       

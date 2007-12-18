@@ -9,6 +9,16 @@
 
    Revision history:
 
+	4.11.0
+		B.Marr		2007-12-15
+		
+		Rename some variables, structures, and/or routines to be
+		clearer about their purpose and/or to allow easier searching
+		with fewer "false positives".
+		
+		Eliminate the now-needless "F13" ("Friday the 13th") special
+		event trigger and the associated processing of it.
+		
 	4.10.0
 		B.Marr		2006-07-19
 		
@@ -161,7 +171,7 @@ extern void recalc_paper_parameters (int paper_size_idx);
 extern char *alloc (int size);
 extern int calc_day (int ord, int wkd, int mm);
 extern int calc_weekday (int mm, int dd, int yy);
-extern int calc_year_day (int ord, int wkd, DATE *pdate);
+extern int calc_year_day (int ord, int wkd, date_str *pdate);
 extern int century (void);
 extern int ci_strcmp (register char *s1, register char *s2);
 extern int ci_strncmp (register char *s1, register char *s2, int n);
@@ -175,7 +185,7 @@ extern int is_valid (register int m, register int d, register int y);
 extern int loadwords (char **words, char *buf);
 extern char *mk_filespec (char *filespec, char *path, char *name);
 extern char *mk_path (char *path, char *filespec);
-extern void normalize (DATE *pd);
+extern void normalize (date_str *pd);
 extern int note_box (int mm, int dd, int yy);
 extern int note_day (int mm, int n, int yy);
 extern char *set_fontstyle (char *p, char *esc);
@@ -197,16 +207,15 @@ extern int do_include (char *path, char *name, int noerr);
 extern int do_undef (char *sym);
 extern int enter_day_info (int m, int d, int y, int text_type, char **pword);
 extern int delete_day_info (int m, int d, int y, int text_type, char **pword);
-extern int process_date (char **pword, int *ptext_type, char ***pptext);
+extern int process_event_specification (char **pword, int *ptext_type, char ***pptext);
 extern int enter_note (int mm, char **pword, int n);
-extern int find_easter (DATE *pdate);
-extern int find_fri13th (DATE *pdate);
+extern int find_easter (date_str *pdate);
 
 #ifndef NO_ORTHODOX
 extern int odox_easter_from_april1 (int year);
-extern int find_odox_easter (DATE *pdate);
-extern int find_odox_stgeorge (DATE *pdate);
-extern int find_odox_marcus (DATE *pdate);
+extern int find_odox_easter (date_str *pdate);
+extern int find_odox_stgeorge (date_str *pdate);
+extern int find_odox_marcus (date_str *pdate);
 #endif
 
 extern int find_sym_name (char *sym);
@@ -230,7 +239,7 @@ extern int is_workday (int mm, int dd, int yy);
 extern int not_holiday (int mm, int dd, int yy);
 extern int not_weekday (int mm, int dd, int yy);
 extern int not_workday (int mm, int dd, int yy);
-extern int parse (char **pword, char *filename);
+extern int parse_as_non_preproc (char **pword, char *filename);
 extern int parse_date (char **pword, int *ptype, char ***pptext);
 extern int parse_ord (int ord, int val, char **pword);
 extern int parse_rel (int val, int wkd, char **pword, int *ptype, char ***pptext);

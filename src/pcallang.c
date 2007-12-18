@@ -9,6 +9,13 @@
 
    Revision history:
 
+	4.11.0
+		B.Marr		2007-12-15
+		
+		Add support for Slovak language, thanks to Zdenko Podobny.
+		
+		Add support for Hawaiian language, thanks to Eric Nichols.
+		
 	4.10.0
 		B.Marr		2006-07-19
 		
@@ -425,6 +432,16 @@ char *months_ml[NUM_LANGUAGES][12] = {
    { "Januar", "Februar", "Marts", "April", "Maj", "Juni",
      "Juli", "August", "September", "Oktober", "November", "December" },
 
+   /* Slovak */
+   { "Janu\341r", "Febru\341r", "Marec", "Apr\355l",
+     "M\341j", "J\372n", "J\372l", "August",
+     "September", "Okt\363ber", "November", "December" },
+
+   /* Hawaiian */
+   { "Ianuali", "Pepeluali", "Malaki", "`Apelila", "Mei", "Iune",
+     "Iulai", "`Aukake", "Kepakemapa", "`Okakopa", "Nowemapa",
+     "K\272k\272mapa" },
+
 };
 
 /* 
@@ -530,6 +547,14 @@ char days_ml[NUM_LANGUAGES][7][DAY_LENGTH_MAX_CHARS] = {
     { "S\370ndag", "Mandag", "Tirsdag", "Onsdag", 
       "Torsdag", "Fredag", "L\370rdag" },
 
+   /* Slovak */
+   { "Nede\265a", "Pondelok", "Utorok", "Streda", 
+     "\251tvrtok", "Piatok", "Sobota" },
+
+   /* Hawaiian */
+   { "L\340pule", "P\362`akahi", "P\362`alua", "P\362`akolu",
+     "P\362`ah\340", "P\362`alima", "P\362`aono" },
+
 };
 
 /* 
@@ -609,6 +634,12 @@ char days_ml_short[NUM_LANGUAGES][7][DAY_LENGTH_MAX_CHARS] = {
    /* Danish */
    { "S\370", "Ma", "Ti", "On", "To", "Fr", "L\370" },
 
+   /* Slovak */
+   { "Ne", "Po", "Ut", "St", "\251t", "Pi", "So" },
+
+   /* Hawaiian */
+   { "LP", "P1", "P2", "P3", "P4", "P5", "P6" },
+
 };
 
 /*
@@ -629,6 +660,13 @@ char days_ml_short[NUM_LANGUAGES][7][DAY_LENGTH_MAX_CHARS] = {
    (language code) standard.  Do not use the ISO 3166 (country code) standard
    since those values are often different from the language code values
    (e.g. Sweden country code = 'se', Swedish language code = 'sv').
+
+   NOTE:
+
+      Unfortunately, while the Hawaiian language has a 3-letter ISO 639 code
+      ('haw'), it appears to have no 2-letter ISO 639 code.  Therefore, I
+      (Bill Marr) decided to use 'ha' (the code for the language known as
+      'Hausa') since I don't suspect that will cause any problems.
    
  */
 char lang_id[NUM_LANGUAGES][LANG_LENGTH_MAX_CHARS] = {
@@ -654,6 +692,8 @@ char lang_id[NUM_LANGUAGES][LANG_LENGTH_MAX_CHARS] = {
         "nl [Dutch]",
         "ro [Romanian]",
         "da [Danish]",
+        "sk [Slovak]",
+        "ha [Hawaiian]",
 };
 
 /*
@@ -689,6 +729,8 @@ int lang_mapping[NUM_LANGUAGES] = {
         ENC_LATIN_1,    /* Dutch */
         ENC_LATIN_2,    /* Romanian */
         ENC_LATIN_1,    /* Danish */
+        ENC_LATIN_2,    /* Slovak */
+        ENC_LATIN_4,    /* Hawaiian */
 };
 
 /* ---------------------------------------------------------------------------

@@ -8,6 +8,17 @@
 #    DOS+DJGPP: make OS=DJGPP
 # 
 # 
+# v4.11.0: Bill Marr
+#    
+#    Provide support for a user-specified destination directory ('$DESTDIR') 
+#    on the installation step.
+#    
+#       For example: make DESTDIR=$HOME/test install
+#    
+#    Remove all remaining references (environment variables, etc) to the
+#    unneeded 'pcalinit' items, which were accidentally overlooked in the 
+#    last release.
+#    
 # v4.10.0: Bill Marr
 #    
 #    Accommodate the fact that the use of 'pcalinit.{c,ps,h}' is no longer
@@ -92,10 +103,6 @@
 # appropriate values for the OS name, the 'build environment' flag, the names
 # of the executable files, the compiler(s), and the 'PACK' value.
 # 
-# The 'PCALINIT_CC' value should always specify the compiler native to the
-# host on which we're building 'pcal'.  The 'CC' value should specify the same
-# (native) compiler, unless the target machine requires a cross-compiler.
-# 
 # The 'PACK' value is used for packing the 'man' page.  Note that setting
 # 'PACK' to ":" will cause no packing to be done; otherwise, choose
 # "compress", "pack", or "gzip" as your system requires.
@@ -104,17 +111,13 @@ ifeq ($(OS),DJGPP)   # DOS+DJGPP
 	OS_NAME = "DOS+DJGPP"
 	D_BUILD_ENV	= -DBUILD_ENV_DJGPP
 	PCAL		= pcal.exe
-	PCALINIT	= pcalinit.exe
 	CC		= gcc
-	PCALINIT_CC	= gcc
 	PACK =		:
 else   # Unix
 	OS_NAME = "Unix"
 	D_BUILD_ENV	= -DBUILD_ENV_UNIX
 	PCAL		= pcal
-	PCALINIT	= pcalinit
 	CC		= /usr/bin/gcc
-	PCALINIT_CC	= /usr/bin/gcc
 	PACK		= compress
 	# PACK		= pack
 	# PACK		= gzip
@@ -323,7 +326,7 @@ $(OBJDIR)/writefil.o:	$(SRCDIR)/writefil.c $(SRCDIR)/pcaldefs.h \
 # This target will delete everything except the 'pcal' executable.
 # 
 clean:
-	rm -f $(OBJECTS) $(EXECDIR)/$(PCALINIT) $(OBJDIR)/pcalinit.h \
+	rm -f $(OBJECTS) \
 		$(DOCDIR)/pcal.cat $(DOCDIR)/pcal-help.ps \
 		$(DOCDIR)/pcal-help.html $(DOCDIR)/pcal-help.txt
 
@@ -345,12 +348,11 @@ man:	$(DOCDIR)/pcal.man
 	groff -man -Tascii $(DOCDIR)/pcal.man >$(DOCDIR)/pcal-help.txt
 
 install:	$(EXECDIR)/$(PCAL) man
-	cp $(EXECDIR)/$(PCAL) $(BINDIR)
-	if [ -d $(MANDIR) ]; then \
-		cp $(DOCDIR)/pcal.man $(MANDIR)/pcal.1; \
-		$(PACK) $(MANDIR)/pcal.1; \
-	fi
-	if [ -d $(CATDIR) ]; then \
-		cp $(DOCDIR)/pcal.cat $(CATDIR)/pcal.1; \
-		$(PACK) $(CATDIR)/pcal.1; \
-	fi
+	mkdir -p $(DESTDIR)/$(BINDIR)
+	mkdir -p $(DESTDIR)/$(MANDIR)
+	mkdir -p $(DESTDIR)/$(CATDIR)
+	cp $(EXECDIR)/$(PCAL) $(DESTDIR)/$(BINDIR)
+	cp $(DOCDIR)/pcal.man $(DESTDIR)/$(MANDIR)/pcal.1
+	$(PACK) $(DESTDIR)/$(MANDIR)/pcal.1
+	cp $(DOCDIR)/pcal.cat $(DESTDIR)/$(CATDIR)/pcal.1
+	$(PACK) $(DESTDIR)/$(CATDIR)/pcal.1

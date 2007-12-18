@@ -9,6 +9,25 @@
      
    Revision history:
 
+	4.11.0
+		B.Marr		2007-12-15
+		
+		Add support for new '-W' option, to specify horizontal
+		alignment of the "Month/Year" title on monthly-format
+		calendars, thanks to a patch from Todd Foster.
+		
+		Add support for building on Amiga, thanks to a patch from
+		Stefan Haubenthal.
+		
+		Add support for new "on" preposition, thanks to a request from
+		and in part to a patch from Erkki Petsalo.
+		
+		Enhance some comments.
+		
+		Rename some variables, structures, and/or routines to be
+		clearer about their purpose and/or to allow easier searching
+		with fewer "false positives".
+		
 	4.10.0
 		B.Marr		2006-07-19
 		
@@ -316,7 +335,7 @@ typedef struct {
    int mm;
    int dd;
    int yy;
-} DATE;
+} date_str;
 
 /*
  * Global typedef declarations for keyword descriptors (cf. pcallang.h)
@@ -341,7 +360,7 @@ typedef struct {
 typedef struct {
    char *name;
    char *def;   /* "def" and "pfcn" are mutually exclusive */
-   int (*pfcn)(DATE *);
+   int (*pfcn)(date_str *);
 } KWD_H;   /* keyword, equivalent string, dispatch fcn */
 
 /* 
@@ -411,8 +430,10 @@ typedef char *DATE_MSG;   /* date file syntax message */
 #define START_PATH	'/'
 #define END_PATH	'/'
 
+#ifndef AMIGA
 #define PAGER_ENV	"PAGER"		/* points to help message pager */
 #define PAGER_DEFAULT	"more"		/* default pager (NULL = none) */
+#endif
 
 #endif
 
@@ -582,6 +603,7 @@ typedef char *DATE_MSG;   /* date file syntax message */
 #define PR_NEAREST	  4
 #define PR_NEAREST_BEFORE 5
 #define PR_NEAREST_AFTER  6
+#define PR_ON		  7
 #define PR_OTHER	 -1	/* not a preposition */
 
 /*
@@ -617,7 +639,13 @@ typedef char *DATE_MSG;   /* date file syntax message */
 
 #define FEB_29_OK	 1	/* if != 0, ignore 2/29 of common year */
 
-#define KEEP_NULL_LINES	 1	/* if != 0, copy blank text lines to output */
+/* 
+   Empty text associated with an event entry or a 'note' entry is propagated
+   to the calendar as a blank line.  This is useful for grouping related lines
+   together.  If you prefer to ignore such lines, define 'KEEP_NULL_LINES' as
+   0 here.
+*/
+#define KEEP_NULL_LINES	 1
 
 #define NEAREST_INCR	 1	/* if 1, disambiguate "nearest" as later    */
 				/* date; if -1, to earlier (cf. readfile.c) */
@@ -762,6 +790,9 @@ typedef char *DATE_MSG;   /* date file syntax message */
 #ifndef SHADING
 #define SHADING		"0.8/0.9"	/* default shading (dates/fill boxes) */
 #endif
+
+#define IS_TITLE_ALIGN(s) (strcmp(s,"left") == 0 || strcmp(s,"center") == 0 || strcmp(s,"right") == 0)
+#define TITLE_ALIGN "center"  /* default monthly title alignment */
 
 #define LFOOT		""              /* default foot strings */
 #define CFOOT		""
@@ -1013,6 +1044,8 @@ typedef char *DATE_MSG;   /* date file syntax message */
 
 #define F_TYPEFACE	'T'		/* set fontstyle (Bold/Roman/Italic) */
 
+#define F_TITLEALIGN	'W'		/* set title alignment (left/center/right) */
+
 /* special "hidden" flag (and subflags) for debug info generation */
 
 #define F_DEBUG		'Z'		/* generate debugging information */
@@ -1044,6 +1077,7 @@ typedef char *DATE_MSG;   /* date file syntax message */
 #define W_LANG		"<LANG>"
 #define W_PAPERSIZE	"<PAPERSIZE>"
 #define W_TYPEFACE	"B|I|R"
+#define W_TITLEALIGN	"left|center|right"
 #define W_MAPPING	"<MAPPING>"
 #define W_N		"<n>"
 #define W_SHADING	"{<d>}{/<f>}"
@@ -1283,8 +1317,9 @@ extern int next_cal_box[];
 extern char time_zone[];
 extern int tz_flag;
 
-extern int debug_flags;
+extern char title_align[];
 
+extern int debug_flags;
 
 extern char *color_names[];
 extern char *days[];

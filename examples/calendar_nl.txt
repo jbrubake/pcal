@@ -28,4 +28,8 @@ day after Christmas*		2e Kerstdag
 last Sunday in March		Begin zomertijd (+1 hour)
 last Sunday in October		Einde zomertijd (-1 hour)
 #
-F13				Vrijdag de 13e!!
+ifdef v4_8_0 | v4_9_0 | v4_9_1 | v4_10_0
+   F13				Vrijdag de 13e!!
+else
+   Fri on all 13		Vrijdag de 13e!!
+endif

@@ -12,6 +12,20 @@
 
    Revision history:
 
+	4.11.0
+		B.Marr		2007-12-15
+		
+		Fix long-standing bug that only manifested itself in a DOS
+		build environment whereby the phases of the moon were being
+		erroneously detected on adjacent days.
+		
+		Remove long-obsolete external 'moon file' concept.  Now, we
+		depend solely on the algorithmic determination of moon phases.
+		
+		Rename some variables, structures, and/or routines to be
+		clearer about their purpose and/or to allow easier searching
+		with fewer "false positives".
+		
 	4.10.0
 		B.Marr		2006-07-19
 		
@@ -117,12 +131,6 @@
 
 */
 
-typedef struct {
-   int doy;   /* day of year (1..366) */
-   int quarter;   /* quarter (MOON_NM, MOON_1Q, etc.) */
-   double phase;   /* moon phase (cycles since new moon prior to 1/1) */
-} MOON_INFO;
-
 /* ---------------------------------------------------------------------------
 
    Constant Declarations
@@ -146,14 +154,6 @@ typedef struct {
 #define mlnode      151.950429   /* mean longitude of the node at the epoch */
 #define synmonth    29.53058868   /* synodic month (new Moon to new Moon) */
 
-/* Misc. stuff, to disappear someday along with moon file routines */
-
-/* hour of day when phase calculated */
-#define HOUR   12   
-
-/* for backward compatibility */
-#define PERIOD   synmonth
-
 /* ---------------------------------------------------------------------------
 
    Macro Definitions
@@ -171,28 +171,11 @@ typedef struct {
 #define todeg(d) ((d) * (180.0 / M_PI))                   /* rad->deg     */
 #define FNITG(x) (sgn (x) * floor (abs (x)))
 
-/* interpolate phase for day "d" from moon_info array elements "n1" and "n2" */
-#define CALC_MOON_PHASE(d, n1, n2) \
-        moon_info[n1].phase + ((d) - moon_info[n1].doy) * \
-        ((moon_info[n2].phase - moon_info[n1].phase) / \
-         (moon_info[n2].doy - moon_info[n1].doy))
-
-/* generate error message, close file, and quit */
-#define ERR_EXIT(msg)   \
-        do { ERR(msg); fclose(fp); return FALSE; } while (0)
-
-/* day and phase sequence error conditions - cf. read_moonfile() */
-#define DAY_TOO_SOON    (nrec > 1 && doy < prevdoy + 6)
-#define DAY_TOO_LATE    (doy > prevdoy + 9)
-#define WRONG_PHASE     (nrec > 1 && ph != (prevph + 1) % 4)
-
 /* ---------------------------------------------------------------------------
 
    Data Declarations (including externals)
 
 */
-
-static MOON_INFO moon_info[60];   /* quarter moons for year + dummies */
 
 /* ---------------------------------------------------------------------------
 
@@ -404,218 +387,12 @@ static int is_quarter (double prev, double curr, double next)
     */
    for (quarter = 1; quarter <= 4; quarter++) {
       if (prev < (phase = quarter/4.0) && next > phase &&
-          (diff = abs(curr - phase)) < phase - prev && diff < next - phase) {
+          (diff = fabs(curr - phase)) < phase - prev && diff < next - phase) {
          return quarter % 4;   /* MOON_NM == 0 */
       }
    }
    
    return MOON_OTHER;
-}
-
-/* ---------------------------------------------------------------------------
-
- * Routines to read moon file and calculate moon phase from data within
- */
- 
-/* ---------------------------------------------------------------------------
-
- * make_moonfile - create the base name for the moon file from the supplied
- * template and year; fill it in and return pointer to it
-
-   The first parameter is the base (output) file name.  The second parameter
-   is the file name template.  The third parameter is the year to substitute
-   for "%y" in the template.
-
- */
-static char *make_moonfile (char *filename, char *templt, int year)
-{
-   char *p;
-   
-   /* copy the template to the file name; replace "%y" (if present) with last
-    * two digits of year (as per other year substitutions)
-    */
-   strcpy(filename, templt);
-   if ((p = strchr(filename, '%')) && p[1] == 'y') {
-      *p++ = '0' + (year / 10) % 10;
-      *p   = '0' + year % 10;
-   }
-   
-   return filename;
-}
-
-/* ---------------------------------------------------------------------------
-
- * find_moonfile - look for moon file for specified year.  If it exists
- * and is readable, return its full path name; else return NULL.  (There
- * are admittedly ways to do this without attempting to open the file -
- * cf. find_executable() in pcalutil.c - but they may not be portable.)
- */
-char *find_moonfile (int year)
-{
-   static char filename[STRSIZ];
-   char path[STRSIZ], *pathlist[3], moonfile[STRSIZ];
-   FILE *fp;
-   static int sv_year = 0;
-   static char *sv_path = NULL;
-   
-   /* if -z or -e specified, use algorithm even if moon file present */
-   if (tz_flag || ! *datefile) return NULL;
-
-   /* if year hasn't changed, then return the previous path */
-   if (year == sv_year) return sv_path;
-
-   /* create list of paths for alt_fopen() to search */
-   pathlist[0] = mk_path(path, datefile);   /* datefile path */
-   pathlist[1] = progpath;   /* program path */
-   pathlist[2] = NULL;   /* terminate list */
-   
-   /* attempt to open the moon file */
-   fp = alt_fopen(filename, make_moonfile(moonfile, MOONFILE, year), pathlist, "r");
-
-#ifdef ALT_MOONFILE
-   if (!fp) {   /* try again with alternate name */
-      fp = alt_fopen(filename, make_moonfile(moonfile, ALT_MOONFILE, year), pathlist, "r");
-   }
-#endif
-
-   /* save year and path for next time around */
-   sv_year = year;
-   sv_path = fp ? (fclose(fp), filename) : NULL;
-   
-   return sv_path;
-}
-
-/* ---------------------------------------------------------------------------
-
- * read_moonfile - looks for moon data file (in same directory as .calendar
- * or where pcal executable lives - cf. find_moonfile()); if found, reads
- * file, fills in moon_info[] and returns TRUE; if not found (or error
- * encountered), returns FALSE
- */
-int read_moonfile (int year)
-{
-   char *filename;
-   int line, nrec, month, day, hh, mm, dummy, mf_date_style;
-   int ph, prevph = MOON_OTHER, doy, prevdoy, n, quarter = 0;
-   double phase;
-   FILE *fp;
-   static char *words[MAXWORD];   /* avoid conflicts with globals */
-   static char lbuf[LINSIZ];
-
-   /* get name of moon file and attempt to open it */
-   
-   if ((filename = find_moonfile(year)) == NULL ||
-       (fp = fopen(filename, "r")) == NULL) {
-      if (DEBUG(DEBUG_MOON) || DEBUG(DEBUG_PATHS))
-         fprintf(stderr, "No moon file for %d\n", year);
-      return FALSE;
-   }
-
-   if (DEBUG(DEBUG_MOON) || DEBUG(DEBUG_PATHS)) {
-      fprintf(stderr, "Using moon file %s\n", filename);
-   }
-
-   /*
-    * Moon file entries are of the form <phase> <date> {<time>}; each is
-    * converted below to a moon_info[] record (note that only the initial
-    * phase of the moon is directly calculated from <phase>; it is
-    * subsequently used only for error checking).  Dummy entries in
-    * moon_info[] precede and follow the information read from the moon file;
-    * these are used for subsequent interpolation of dates before the first /
-    * after the last quarter of the year.
-    */
-
-   prevdoy = 0;
-   line = 0;
-   mf_date_style = date_style;   /* unless overridden by "opt -[AE]" */
-   
-   for (nrec = 1; get_pcal_line(fp, lbuf, &line); nrec++) {
-
-      /* special check for "opt -[AE]" line */
-      n = loadwords(words, lbuf);
-
-      if (n == 2 && date_type(words[0], &dummy, &dummy) == DT_OPT) {
-         if (words[1][0] == '-') {
-            char c = words[1][1];
-            if (c == F_USA_DATES || c == F_EUR_DATES) {
-               mf_date_style = c == F_USA_DATES ?
-                  USA_DATES : EUR_DATES;
-               nrec--;   /* skip this line */
-               continue;
-            }
-         }
-      }
-
-      /* ensure line is recognizable */
-      if (n < 2 || (ph = get_phase(words[0])) == MOON_OTHER) ERR_EXIT(E_INV_LINE);
-      
-      if (nrec == 1) {   /* phase at initial quarter */
-         quarter = ph == MOON_NM ? 4 : ph;
-      }
-
-      /* extract the month and day fields (in appropriate order) */
-      
-      (void) split_date(words[1],
-                        mf_date_style == USA_DATES ? &month : &day,
-                        mf_date_style == USA_DATES ? &day : &month,
-                        NULL);
-      
-      /* validate the date and phase */
-      
-      if (!is_valid(month, day, year)) {   /* date OK? */
-         ERR_EXIT(E_INV_DATE);
-      }
-
-      doy = DAY_OF_YEAR(month, day, year);   /* in sequence? */
-      if (DAY_TOO_SOON || DAY_TOO_LATE || WRONG_PHASE) ERR_EXIT(E_DATE_SEQ);
-
-      prevdoy = doy;   /* save for sequence check */
-      prevph = ph;
-
-      /* calculate moon phase, factoring in time (if present) */
-
-      phase = 0.25 * quarter++;
-      if (n > 2) {   /* extract hour and minute */
-         (void) split_date(words[2], &hh, &mm, NULL);
-         phase += (HOUR - (hh + (mm / 60.0))) / (24 * PERIOD); 
-      }
-      moon_info[nrec].doy = doy;   /* enter day and phase */
-      moon_info[nrec].quarter = ph % 4;
-      moon_info[nrec].phase = phase;
-      
-      if (DEBUG(DEBUG_MOON))
-         fprintf(stderr, "moon_info[%2d]: %3d %d %6.3f\n", nrec,
-                 moon_info[nrec].doy, moon_info[nrec].quarter,
-                 moon_info[nrec].phase);
-   }
-   
-   /* check to see that file is all there */
-   
-   doy = YEAR_LEN(year) + 1;   /* day after end of year */
-   if (DAY_TOO_LATE) ERR_EXIT(E_PREM_EOF);
-   
-   /* extrapolate dummy entries from nearest lunar month */
-   
-   moon_info[nrec].doy = doy;   /* day after end of year */
-   moon_info[nrec].quarter = MOON_OTHER;
-   moon_info[nrec].phase = CALC_MOON_PHASE(doy, nrec-5, nrec-1);
-   if (DEBUG(DEBUG_MOON)) {
-      fprintf(stderr, "moon_info[%2d]: %3d %d %6.3f\n", nrec,
-              moon_info[nrec].doy, moon_info[nrec].quarter,
-              moon_info[nrec].phase);
-   }
-   
-   moon_info[0].doy = 0;   /* day before start of year */
-   moon_info[0].quarter = MOON_OTHER;
-   moon_info[0].phase = CALC_MOON_PHASE(0, 1, 5);
-   if (DEBUG(DEBUG_MOON)) {
-      fprintf(stderr, "moon_info[%2d]: %3d %d %6.3f\n", 0,
-              moon_info[0].doy, moon_info[0].quarter,
-              moon_info[0].phase);
-   }
-   
-   fclose(fp);
-   return TRUE;
 }
 
 /* ---------------------------------------------------------------------------
@@ -627,7 +404,7 @@ int read_moonfile (int year)
 static void gen_phases (double phase[], int month, int year)
 {
    int day, len;
-   DATE date;
+   date_str date;
    
    /* start with moon phase for last day of previous month */
    MAKE_DATE(date, month, 0, year);
@@ -647,52 +424,26 @@ static void gen_phases (double phase[], int month, int year)
 
 /* ---------------------------------------------------------------------------
 
- * find_phase - look up phase of moon in moon phase file (if possible);
- * otherwise calculate it using calc_phase() above.  Sets *pquarter to
- * MOON_NM, MOON_1Q, etc. if quarter moon, MOON_OTHER if not
+ * find_phase - calculate phase of moon using calc_phase() above.  Sets
+ * *pquarter to MOON_NM, MOON_1Q, etc. if quarter moon, MOON_OTHER if not
  */
 double find_phase (int month, int day, int year, int *pquarter)
 {
    static int sv_year = 0, sv_month = 0;
-   static int use_file;
    static double mphase[33];   /* 31 days + 2 dummies */
-   int i, doy;
    double phase;
    
-   if (year != sv_year) {   /* look for file for new year */
-      use_file = read_moonfile(year);
-   }
-   
-   if (! use_file) {   /* no file - calculate phase */
-      /* new month?  fill mphase[] with moon phases */
-      if (month != sv_month || year != sv_year) {
-         gen_phases(mphase, month, year);
-         sv_month = month;
-         sv_year = year;
-      }
-      
-      phase = mphase[day];
-      *pquarter = is_quarter(mphase[day-1], phase, mphase[day+1]);
-      return phase;
-   }
+   /* calculate moon phase */
 
-   /* moon file found - use the data read by read_moonfile() */
-   
-   sv_year = year;   /* avoid re-reading same file */
-   doy = DAY_OF_YEAR(month, day, year);
-   for (i = 1; doy > moon_info[i].doy; i++)   /* find interval */
-      ;
-   
-   /* if day appears in table, return exact value; else interpolate */
-   
-   if (doy == moon_info[i].doy) {
-      *pquarter = moon_info[i].quarter;
-      phase = moon_info[i].phase;
-   } 
-   else {
-      *pquarter = MOON_OTHER;
-      phase = CALC_MOON_PHASE(doy, i-1, i);
+   /* new month?  fill mphase[] with moon phases */
+   if (month != sv_month || year != sv_year) {
+      gen_phases(mphase, month, year);
+      sv_month = month;
+      sv_year = year;
    }
    
-   return phase - (int)phase;   /* 0.0 <= phase < 1.0 */
+   phase = mphase[day];
+   *pquarter = is_quarter(mphase[day-1], phase, mphase[day+1]);
+
+   return phase;
 }

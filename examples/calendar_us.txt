@@ -92,8 +92,16 @@ last day in Dec			New Year's Eve
 ##
 ## Daylight Savings
 ##
-first Sun in Apr		DST begins (+1h)
-last Sun in Oct			DST ends (-1h)
+# 
+# Pre-2007:
+# 
+# first Sun in Apr		DST begins (+1h)
+# last Sun in Oct		DST ends (-1h)
+# 
+# 2007 and beyond:
+# 
+second Sun in Mar		DST begins (+1h)
+first Sun in Nov		DST ends (-1h)
 
 
 ##
