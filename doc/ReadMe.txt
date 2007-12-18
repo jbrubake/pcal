@@ -85,7 +85,7 @@ Overview:
            -T  select typeface for date/note text	-t  select alternate title font
            -U  undefine preprocessor symbol		-u  display parameter usage message
            -V  <unused>					-v  display version ID
-           -W  <unused>					-w  print whole-year/page calendar
+           -W  monthly title horizontal alignment	-w  print whole-year/page calendar
            -X  X-axis transformation			-x  X-axis scale factor
            -Y  Y-axis transformation			-y  Y-axis scale factor
            -Z  generate debugging information		-z  specify alternate time zone
