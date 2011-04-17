@@ -1,0 +1,96 @@
+#
+# Default european paper size
+#
+
+opt -P a4
+
+#
+# Output language, danish
+#
+
+opt -a da
+
+#
+# Timezone for Denmark
+#
+
+opt -z-1
+
+# 
+# Interpret dates in this file as 'European' style.
+# 
+
+opt -E
+
+#
+# Convert .calendar to ISO-8859-1 (Latin-1) if you use UTF-8 encoding
+#
+# iconv -t ISO-8859-1//TRANSLIT .calendar > calendar 
+# mv calendar .calendar
+# 
+
+#
+#  Latin character conversion for Denmark
+#
+
+opt -r Latin1
+
+# 
+# This directive causes the following entries to apply to every year, rather
+# than just applying to the current year.
+# 
+
+year all
+
+
+#
+#   Fixed date days/holidays
+#
+
+1 January*			    Nytårsdag
+6 January			    Hellig 3 konger
+1 April				    Aprilnar
+9 April				    Danmarks besættelse
+1 May*				    Arbejdernes kampdag
+5 May				    Danmarks befrielse
+5 June*				    Grundlovsdag
+15 June				    Valdemarsdag
+24 June				    Sct. Hansdag
+11 November			    Morten bisp
+day before Christmas*		    Juleaftensdag
+Christmas*			    Juledag
+day after Christmas*		    2. juledag
+31 December*			    Nytårsaften
+
+#
+# Relative days to Easter
+#
+
+49th day before Easter		Fastelavn
+7th Wednesday before Easter	Aske onsdag
+Thursday before Easter*		Skærtorsdag
+Friday before Easter*		Langfredag
+Sunday before Easter*		Palmesøndag
+Easter*				Påskedag 
+day after Easter*		2. påskedag
+4th Friday after Easter*	Store bededag
+7th Sunday after Easter*	Pinsedag
+day after 7th Sunday after Easter*		2. pinsedag
+6th Thursday after Easter*	Kr. himmelfartsdag
+
+
+# 
+# Some sample (non-holiday) events...
+# 
+# Daylight Savings Time for Denmark
+
+last Sun in Mar		Sommertid start
+last Sun in Oct		Vintertid start
+
+#
+# Display the week number (i.e. 1-52) on every Monday...
+# 
+
+all monday in all	Ugenummer %U
+
+
