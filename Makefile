@@ -118,9 +118,7 @@ else   # Unix
 	D_BUILD_ENV	= -DBUILD_ENV_UNIX
 	PCAL		= pcal
 	CC		= /usr/bin/gcc
-	PACK		= compress
-	# PACK		= pack
-	# PACK		= gzip
+	PACK		= gzip
 endif
 
 # 
