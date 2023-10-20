@@ -60,7 +60,7 @@
 #    deltas applied by the Debian distribution.
 #    
 #    Bypass some processing of the documentation if the directory specified
-#    by 'MANDIR' and/or 'CATDIR' does not exist.  This prevents an error 
+#    by 'MANDIR' does not exist.  This prevents an error 
 #    during the 'make install' step when building in certain environments 
 #    (e.g. DOS+DJGPP).
 # 
@@ -119,6 +119,7 @@ else   # Unix
 	PCAL		= pcal
 	CC		= /usr/bin/gcc
 	PACK		= gzip
+	PREFIX          = /usr/local
 endif
 
 # 
@@ -129,7 +130,6 @@ endif
 #    - installed 'pcal' executable
 #    - documentation
 #    - 'man' pages
-#    - 'cat' pages
 # 
 SRCDIR	= src
 OBJDIR	= obj
@@ -138,16 +138,14 @@ DOCDIR	= doc
 
 # 
 # Compiling for DOS+DJGPP requires different directories for the installed
-# executable and the 'man'/'cat' pages.  Unix uses the values shown below.
+# executable and the 'man' pages.  Unix uses the values shown below.
 # 
 ifeq ($(OS),DJGPP)   # DOS+DJGPP
 	BINDIR = $(DJDIR)/bin
 	MANDIR = $(DJDIR)/man/man1
-	CATDIR = $(DJDIR)/man/cat1
 else   # Unix
-	BINDIR = /usr/local/bin
-	MANDIR = /usr/man/man1
-	CATDIR = /usr/man/cat1
+	BINDIR = $(PREFIX)/bin
+	MANDIR = $(PREFIX)/share/man/man1
 endif
 
 OBJECTS = $(OBJDIR)/pcal.o \
@@ -325,8 +323,9 @@ $(OBJDIR)/writefil.o:	$(SRCDIR)/writefil.c $(SRCDIR)/pcaldefs.h \
 # 
 clean:
 	rm -f $(OBJECTS) \
-		$(DOCDIR)/pcal.cat $(DOCDIR)/pcal-help.ps \
-		$(DOCDIR)/pcal-help.html $(DOCDIR)/pcal-help.txt
+		$(DOCDIR)/pcal-help.ps \
+		$(DOCDIR)/pcal-help.html \
+		$(DOCDIR)/pcal-help.txt
 
 # 
 # This target will delete everything, including the 'pcal' executable.
@@ -340,7 +339,6 @@ clobber: clean
 fresh:	clobber $(PCAL)
 
 man:	$(DOCDIR)/pcal.man
-	nroff -man $(DOCDIR)/pcal.man > $(DOCDIR)/pcal.cat
 	groff -man -Tps $(DOCDIR)/pcal.man >$(DOCDIR)/pcal-help.ps
 	groff -man -Thtml $(DOCDIR)/pcal.man >$(DOCDIR)/pcal-help.html
 	groff -man -Tascii $(DOCDIR)/pcal.man >$(DOCDIR)/pcal-help.txt
@@ -348,9 +346,6 @@ man:	$(DOCDIR)/pcal.man
 install:	$(EXECDIR)/$(PCAL) man
 	mkdir -p $(DESTDIR)/$(BINDIR)
 	mkdir -p $(DESTDIR)/$(MANDIR)
-	mkdir -p $(DESTDIR)/$(CATDIR)
 	cp $(EXECDIR)/$(PCAL) $(DESTDIR)/$(BINDIR)
 	cp $(DOCDIR)/pcal.man $(DESTDIR)/$(MANDIR)/pcal.1
 	$(PACK) $(DESTDIR)/$(MANDIR)/pcal.1
-	cp $(DOCDIR)/pcal.cat $(DESTDIR)/$(CATDIR)/pcal.1
-	$(PACK) $(DESTDIR)/$(CATDIR)/pcal.1
